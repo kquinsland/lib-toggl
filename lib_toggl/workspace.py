@@ -22,7 +22,7 @@ class CSVUpload(BaseModel):
 
 
 class Subscription(BaseModel):
-    """_summary_"""
+    """Machine generated class representing the Toggl Subscription object."""
 
     auto_renew: bool
     # Docs say type is: models.CardDetails
@@ -57,6 +57,7 @@ class Workspace(BaseModel):
 
     admin: bool
     api_token: SecretStr
+    # Seems to be the datetime server side that request was received
     at: datetime
     business_ws: bool
     csv_upload: CSVUpload
@@ -68,6 +69,8 @@ class Workspace(BaseModel):
     last_modified: datetime
     logo_url: str
     # How far back free workspaces can access data.
+    # Docs indicate that it's a thing ... I don't have it in the payloads that I'm getting back
+    # Disable for now.
     # max_data_retention_days: Optional[int | None]
     name: str
     only_admins_may_create_projects: bool

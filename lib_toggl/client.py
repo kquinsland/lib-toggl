@@ -1,16 +1,16 @@
 """
-Very basic toggle api wrapper
+Very basic Toggl API wrapper
 """
-from urllib.request import Request, urlopen
 
 import json
 from base64 import b64encode
+from urllib.request import Request, urlopen
 
 import certifi
-
 import structlog
 
-from .workspace import Workspace, ENDPOINT as WORKSPACE_ENDPOINT
+from .workspace import ENDPOINT as WORKSPACE_ENDPOINT
+from .workspace import Workspace
 
 log = structlog.get_logger(__name__)
 
