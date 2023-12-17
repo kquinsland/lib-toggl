@@ -9,6 +9,7 @@ It's currently in a very early stage of development, and is primarily focused on
 - [`lib-toggl`](#lib-toggl)
   - [Using](#using)
   - [Dev](#dev)
+  - [TODO](#todo)
 
 ## Using
 
@@ -20,7 +21,7 @@ For now, see the `scripts` directory for examples of how to use the library.
 I use VSCode for development so there's a `.vscode` directory with some settings that I use.
 Most of the extensions and configuration directives there should be easy to port to your preferred editor / IDE as needed.
 
-Pretty simple setup; it's all `poetry` driven...
+Pretty simple setup; it's all [`poetry`](https://python-poetry.org/) driven...
 
 Create a virtual environment for the project.
 
@@ -38,3 +39,16 @@ Switching virtualenv: .venv [🐍Python 3.11.6]
 ❯ which python
 /home/karl/projects/ha-dev/TogglPy/.venv/bin/python
 ```
+
+Don't forget to [install `pre-commit` hooks.](https://pre-commit.com/)
+
+```shell
+//TODO
+```
+
+## TODO
+
+- Tests
+- Async
+- CI/CD/GHA automation
+- pre-commit hooks
