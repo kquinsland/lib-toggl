@@ -1,5 +1,12 @@
 """
 Very basic Toggl API wrapper
+
+Order of importance for implementation
+
+- Create/Update/Stop time entries
+- Get current running time entry
+- Projects
+- Client
 """
 
 import json
@@ -11,6 +18,9 @@ import structlog
 
 from .workspace import ENDPOINT as WORKSPACE_ENDPOINT
 from .workspace import Workspace
+from .organization import ENDPOINT as ORGANIZATIONS_ENDPOINT
+from .organization import Organization
+
 
 log = structlog.get_logger(__name__)
 
@@ -82,3 +92,17 @@ class Toggl:
         d = self.do_request(Request(WORKSPACE_ENDPOINT))
         log.info("get_workspaces", d=d)
         return [Workspace(**x) for x in d]
+
+    def get_organizations(self) -> [Organization]:
+        """_summary_
+
+        Returns:
+            [Workspace]: _description_
+        """
+        log.info("get_organizations is alive...")
+        d = self.do_request(Request(ORGANIZATIONS_ENDPOINT))
+        log.info("get_workspaces", d=d)
+        return [Organization(**x) for x in d]
+
+
+#

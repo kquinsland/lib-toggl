@@ -20,6 +20,9 @@ def main():
     w = api.get_workspaces()
     log.info("workspaces", count=len(w), workspaces=w)
 
+    o = api.get_organizations()
+    log.info("get_organizations", count=len(o), orgs=o)
+
 
 if __name__ == "__main__":
     main()
