@@ -58,7 +58,7 @@ repos:
   - repo: https://github.com/thlorenz/doctoc
     # See: https://github.com/thlorenz/doctoc/tags
     rev: v2.2.0
-    files: README.md
     hooks:
       - id: doctoc
+        files: README.md
         args: ["--update-only", "--github", "--maxlevel", "3"]
