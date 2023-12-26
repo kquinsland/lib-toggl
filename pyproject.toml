@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "lib-toggl"
-version = "0.1.0"
-description = ""
+version = "0.1.1"
+description = "Asynchronous Python library for the Toggl API."
 authors = ["Karl Quinsalnd <karl@karlquinsland.com>"]
 readme = "README.md"
 packages = [{ include = "lib_toggl" }]
@@ -18,7 +18,6 @@ aiodns = "^3.1.1"
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.0.3"
 isort = "^5.13.2"
-structlog = "^23.2.0"
 black = "^23.12.0"
 pytest = "^7.4.3"
 pytest-asyncio = "^0.23.2"

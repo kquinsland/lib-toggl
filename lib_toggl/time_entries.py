@@ -1,16 +1,16 @@
 """Various type/class definitions for the Organizations bit of the Toggle API
 Parse/Coercion done by Pydantic
 """
+import logging
 from datetime import datetime
 from typing import List, Optional
 
-import structlog
 from pydantic import BaseModel, Field, FieldSerializationInfo, field_serializer
 from pyrfc3339 import generate
 
 from .const import BASE, DEFAULT_CREATED_BY
 
-log = structlog.get_logger(__name__)
+log = logging.getLogger(__name__)
 
 ENDPOINT = f"{BASE}/me/time_entries"
 

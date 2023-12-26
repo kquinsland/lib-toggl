@@ -2,14 +2,11 @@
 Parse/Coercion done by Pydantic
 """
 from datetime import datetime
-from typing import Any, Optional
+from typing import Optional
 
-import structlog
 from pydantic import BaseModel, SecretStr
 
 from .const import BASE
-
-log = structlog.get_logger(__name__)
 
 ENDPOINT = f"{BASE}/me"
 

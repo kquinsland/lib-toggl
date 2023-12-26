@@ -1,11 +1,11 @@
 """
 Very basic Toggl API wrapper
 """
+import logging
 from datetime import datetime
 from typing import Any
 
 import aiohttp
-import structlog
 from pyrfc3339 import generate
 
 from lib_toggl import __version__ as version
@@ -20,7 +20,7 @@ from .time_entries import TimeEntry
 from .workspace import ENDPOINT as WORKSPACE_ENDPOINT
 from .workspace import Workspace
 
-log = structlog.get_logger(__name__)
+log = logging.getLogger(__name__)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -133,14 +133,14 @@ class Toggl:
         """
 
         await self._pre_flight_check()
-        log.debug("do_get_request", data=data)
+        log.debug("do_get_request", extra={"data": data})
         # TODO: error handling, lots of ways network/json parse can fail...
         async with self._session.get(
             url, headers=self.headers, auth=self._auth, params=data
         ) as resp:
             if resp.status != 200:
                 resp.raise_for_status()
-                log.debug("here is resp (text) ", resp=await resp.text())
+                log.debug("here is resp (text) ", extra={"resp": await resp.text()})
             return await resp.json()
 
     async def do_post_request(
@@ -158,14 +158,14 @@ class Toggl:
 
         await self._pre_flight_check()
 
-        log.debug("do_post_request", data=data)
+        log.debug("do_post_request", extra={"data": data})
         # TODO: error handling, lots of ways network/json parse can fail...
         async with self._session.post(
             url, headers=self.headers, auth=self._auth, data=data
         ) as resp:
             if resp.status != 200:
                 resp.raise_for_status()
-                log.debug("here is resp (text) ", resp=await resp.text())
+                log.debug("here is resp (text) ", extra={"resp": await resp.text()})
             return await resp.json()
 
     async def do_patch_request(
@@ -182,14 +182,14 @@ class Toggl:
         """
         await self._pre_flight_check()
 
-        log.debug("do_patch_request", data=data)
+        log.debug("do_patch_request", extra={"data": data})
         # TODO: error handling, lots of ways network/json parse can fail...
         async with self._session.patch(
             url, headers=self.headers, auth=self._auth, data=data
         ) as resp:
             if resp.status != 200:
                 resp.raise_for_status()
-                log.debug("here is resp (text) ", resp=await resp.text())
+                log.debug("here is resp (text) ", extra={"resp": await resp.text()})
             return await resp.json()
 
     # Actual methods for fetching things from Toggl
@@ -201,9 +201,9 @@ class Toggl:
             [Workspace]: _description_
         """
         log.debug("get_workspaces is alive...")
-        d = await self.do_get_request(WORKSPACE_ENDPOINT)
-        log.debug("get_workspaces", d=d)
-        return [Workspace(**x) for x in d]
+        ws = await self.do_get_request(WORKSPACE_ENDPOINT)
+        log.debug("get_workspaces", extra={"ws": ws})
+        return [Workspace(**x) for x in ws]
 
     async def get_time_entries(
         self,
@@ -234,13 +234,13 @@ class Toggl:
         """Returns active Time Entry if one is running, else None"""
         log.info("get_current_time_entry is alive...")
 
-        d = await self.do_get_request(f"{TIME_ENTRY_ENDPOINT}/current")
-        if d is None:
+        cte = await self.do_get_request(f"{TIME_ENTRY_ENDPOINT}/current")
+        if cte is None:
             log.debug("There doesn't seem to be a currently running Time Entry")
             return None
         try:
-            log.debug("get_current_time_entry", data=d)
-            self._current_time_entry = TimeEntry(**d)
+            log.debug("get_current_time_entry", extra={"cte": cte})
+            self._current_time_entry = TimeEntry(**cte)
             return await self.current_time_entry
 
         # pylint: disable-next=broad-except
@@ -255,7 +255,7 @@ class Toggl:
             Account: _description_
         """
         d = await self.do_get_request(ACCOUNT_ENDPOINT)
-        log.debug("get_account_details", data=d)
+        log.debug("get_account_details", extra={"data": d})
         self._account = Account(**d)
         return await self.account
 
@@ -283,7 +283,7 @@ class Toggl:
         data = te.model_dump_json(exclude_none=True)
         d = await self.do_post_request(_url, data=data)
 
-        log.debug("create_new_time_entry", data=d)
+        log.debug("create_new_time_entry", extra={"data": d})
         return TimeEntry(**d)
 
     async def stop_time_entry(self, te: TimeEntry) -> TimeEntry:
@@ -306,7 +306,10 @@ class Toggl:
         if te.start is None:
             raise ValueError("Time Entry has no start time")
 
-        log.info("stop_time_entry is alive...", id=te.id, workspace=te.workspace_id)
+        log.info(
+            "stop_time_entry is alive...",
+            extra={"id": te.id, "workspace": te.workspace_id},
+        )
         _url = TIME_ENTRY_STOP_ENDPOINT(te.workspace_id, te.id)
         d = await self.do_patch_request(_url)
         return TimeEntry(**d)
