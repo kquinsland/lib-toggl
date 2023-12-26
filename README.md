@@ -77,7 +77,6 @@ The table of contents in `readme.md` is updated with [`doctoc`](https://github.c
 
 ## TODO
 
-- [ ] Move away from structlog and use something more HA friendly (like the stdlib logging module)
 - [ ] pre-commit hooks
 - [ ] Tests
 - [ ] CI/CD/GHA automation
