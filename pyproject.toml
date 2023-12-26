@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "lib-toggl"
+version = "0.1.0"
+description = ""
+authors = ["Karl Quinsalnd <karl@karlquinsland.com>"]
+readme = "README.md"
+packages = [{ include = "lib_toggl" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+certifi = "^2023.11.17"
+pydantic = "^2.5.2"
+pyrfc3339 = "^1.1"
+aiohttp = "^3.9.1"
+aiodns = "^3.1.1"
+
+
+[tool.poetry.group.dev.dependencies]
+pylint = "^3.0.3"
+isort = "^5.13.2"
+structlog = "^23.2.0"
+black = "^23.12.0"
+pytest = "^7.4.3"
+pytest-asyncio = "^0.23.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

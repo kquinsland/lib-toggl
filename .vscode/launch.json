@@ -1,0 +1,14 @@
+{
+  "configurations": [
+    {
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/scripts/.env",
+      "justMyCode": true,
+      "name": "Python: poc.py",
+      "program": "${workspaceFolder}/scripts/poc.py",
+      "request": "launch",
+      "type": "python"
+    }
+  ],
+  "version": "0.2.0"
+}

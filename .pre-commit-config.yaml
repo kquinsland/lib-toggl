@@ -1,0 +1,64 @@
+---
+default_language_version:
+  python: python3.11
+
+# TODO: pytest/mypy, pylint ... etc
+# TODO: for docs / doc-gen, use something like this to turn Pydantic into JSON:
+# github.com/Mermeid-Designs/pydantic-hooks
+
+repos:
+  # Standard fille formatting / hygiene
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    # See: https://github.com/pre-commit/pre-commit-hooks/releases
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: pretty-format-json
+        args:
+          - --autofix
+      # Pypi API key, git ssh key and AWS should never be in this repo... but just in case
+      - id: detect-aws-credentials
+        args:
+          - --allow-missing-credentials
+      - id: detect-private-key
+
+  - repo: https://github.com/PyCQA/isort
+    # See: https://github.com/PyCQA/isort/releases
+    rev: 5.13.2
+    hooks:
+      - id: isort
+
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    # See: https://github.com/pre-commit/pygrep-hooks/tags
+    rev: v1.10.0
+    hooks:
+      - id: python-check-blanket-noqa
+
+  - repo: https://github.com/psf/black
+    # See: https://github.com/psf/black/releases
+    rev: 23.12.1
+    hooks:
+      - id: black
+        language_version: python3.11
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.32.0
+    hooks:
+      - id: yamllint
+        args: [-c=.yamllint.yaml]
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.37.0
+    hooks:
+      - id: markdownlint
+
+  - repo: https://github.com/thlorenz/doctoc
+    # See: https://github.com/thlorenz/doctoc/tags
+    rev: v2.2.0
+    files: README.md
+    hooks:
+      - id: doctoc
+        args: ["--update-only", "--github", "--maxlevel", "3"]
