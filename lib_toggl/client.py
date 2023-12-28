@@ -280,10 +280,9 @@ class Toggl:
         # So, we default both tags and tag_ids to None and let the user pick which to set.
         # TODO: i'll want to do more sophisticated validation / coercion to handle this case.
         #   e.g: tag_action should remain None unless tags is a list with at least one string, then default to add
-        data = te.model_dump_json(exclude_none=True)
+        data = te.json(exclude_none=True)
+        log.debug("create_new_time_entry. To make: %s", data)
         d = await self.do_post_request(_url, data=data)
-
-        log.debug("create_new_time_entry", extra={"data": d})
         return TimeEntry(**d)
 
     async def stop_time_entry(self, te: TimeEntry) -> TimeEntry:

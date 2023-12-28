@@ -4,7 +4,7 @@ Parse/Coercion done by Pydantic
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, SecretStr
+from pydantic.v1 import BaseModel, SecretStr
 
 from .const import BASE
 
