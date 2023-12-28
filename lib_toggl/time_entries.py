@@ -5,7 +5,13 @@ import logging
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic.v1 import BaseModel, Field
+# Pydantic v2 includes v1 so try importing that first
+# See: https://github.com/kquinsland/lib-toggl/issues/3
+try:
+    from pydantic.v1 import BaseModel, Field
+except ImportError:
+    from pydantic import BaseModel, Field
+
 from pyrfc3339 import generate
 
 from .const import BASE, DEFAULT_CREATED_BY

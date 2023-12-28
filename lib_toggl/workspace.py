@@ -5,7 +5,10 @@ import logging
 from datetime import datetime
 from typing import Any, Optional
 
-from pydantic import BaseModel, Field, SecretStr
+try:
+    from pydantic.v1 import BaseModel, Field, SecretStr
+except ImportError:
+    from pydantic import BaseModel, Field, SecretStr
 
 from .const import BASE
 

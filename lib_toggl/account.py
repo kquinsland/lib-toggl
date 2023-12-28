@@ -4,7 +4,12 @@ Parse/Coercion done by Pydantic
 from datetime import datetime
 from typing import Optional
 
-from pydantic.v1 import BaseModel, SecretStr
+# Pydantic v2 includes v1 so try importing that first
+# See: https://github.com/kquinsland/lib-toggl/issues/3
+try:
+    from pydantic.v1 import BaseModel, SecretStr
+except ImportError:
+    from pydantic import BaseModel, SecretStr
 
 from .const import BASE
 
