@@ -1,7 +1,8 @@
-# ADR 01: Use `pydantic` instead of `dataclasses`
+# ADR 01: Use `pydantic` (`v1.X`) instead of `dataclasses`
 
 **Date:** 2023-12-17
 **Status:** Accepted
+**Updated:** 2023-12-28
 
 ## Context
 
@@ -11,7 +12,9 @@ While building out types for the Toggl API, I found myself needing to do a lot o
 
 ## Decision
 
-Describe the decision in detail.
+Use Pydantic v1 due to [this](https://github.com/home-assistant/core/issues/99218) pending Home Assistant issue.
+
+Essentially the use of Pydantic v2 is blocked by existing Home Assistant dependencies that are not compatible with Pydantic v2.
 
 ## Consequences
 

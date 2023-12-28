@@ -9,7 +9,7 @@ packages = [{ include = "lib_toggl" }]
 [tool.poetry.dependencies]
 python = "^3.11"
 certifi = "^2023.11.17"
-pydantic = "^2.5.3"
+pydantic = ">=1.10.2,<3.0.0"
 pyrfc3339 = "^1.1"
 aiohttp = "^3.9.1"
 aiodns = "^3.1.1"

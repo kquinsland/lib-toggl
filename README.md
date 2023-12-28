@@ -79,5 +79,5 @@ The table of contents in `readme.md` is updated with [`doctoc`](https://github.c
 
 - [ ] pre-commit hooks
 - [ ] Tests
-- [ ] CI/CD/GHA automation
+- [ ] CI/CD/GHA automation for testing and pypi release
 - [ ] Devcontainers (for VSCode) so the dev environment is more portable / easier to set up
