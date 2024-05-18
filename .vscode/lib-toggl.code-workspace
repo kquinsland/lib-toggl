@@ -7,22 +7,32 @@
   "settings": {
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
     "cSpell.words": [
+      "aiodns",
+      "aiohttp",
+      "asyncio",
       "autoenv",
+      "autofix",
       "cafile",
       "celerybeat",
       "certifi",
       "dataclasses",
+      "doctoc",
+      "duronly",
+      "excinfo",
       "htmlcov",
       "ical",
       "ipynb",
       "ipython",
       "isort",
+      "maxlevel",
       "noqa",
       "nosetests",
+      "peterdavehello",
       "pycache",
       "pydantic",
       "pyenv",
       "pylint",
+      "pyrfc",
       "pytest",
       "Quinsalnd",
       "scrapy",
@@ -42,7 +52,8 @@
       "streetsidesoftware.code-spell-checker",
       "editorconfig.editorconfig",
       "davidanson.vscode-markdownlint",
-      "yzhang.markdown-all-in-one"
+      "yzhang.markdown-all-in-one",
+      "tamasfe.even-better-toml"
     ]
   }
 }
