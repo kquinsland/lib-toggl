@@ -1,6 +1,7 @@
 """Various type/class definitions for the Organizations bit of the Toggle API
 Parse/Coercion done by Pydantic
 """
+
 import logging
 from datetime import datetime
 from typing import List, Optional
@@ -17,7 +18,7 @@ ENDPOINT = f"{BASE}/me/time_entries"
 
 @staticmethod
 # pylint: disable=invalid-name
-def CREATE_ENDPOINT(workspace_id: int = None) -> str:
+def CREATE_ENDPOINT(workspace_id: int | None) -> str:
     """Returns the endpoint for creating a new time entry in the specified workspace"""
     if not workspace_id:
         raise ValueError("workspace_id must be specified")
@@ -26,13 +27,24 @@ def CREATE_ENDPOINT(workspace_id: int = None) -> str:
 
 @staticmethod
 # pylint: disable=invalid-name
-def STOP_ENDPOINT(workspace_id: int = None, time_entry_id: int = None) -> str:
+def STOP_ENDPOINT(workspace_id: int | None, time_entry_id: int | None) -> str:
     """Returns the endpoint for creating a new time entry in the specified workspace"""
     if not workspace_id:
         raise ValueError("workspace_id must be specified")
     if not time_entry_id:
         raise ValueError("time_entry_id must be specified")
     return f"{BASE}/workspaces/{workspace_id}/time_entries/{time_entry_id}/stop"
+
+
+@staticmethod
+# pylint: disable=invalid-name
+def EDIT_ENDPOINT(workspace_id: int | None, time_entry_id: int | None) -> str:
+    """Returns the endpoint for editing specific time entry in the specified workspace"""
+    if not workspace_id:
+        raise ValueError("workspace_id must be specified")
+    if not workspace_id:
+        raise ValueError("time_entry_id must be specified")
+    return f"{BASE}/workspaces/{workspace_id}/time_entries/{time_entry_id}"
 
 
 class TimeEntry(BaseModel):
@@ -83,6 +95,10 @@ class TimeEntry(BaseModel):
     # Toggl API wants everything in RFC3339 format which is just a specific flavor of ISO8601
     # Internally, just store everything as a datetime with UTC timezone and only convert to
     #   RFC3339 when we need to send it to the API.
+    ##
+    # TODO: pylance says .utcnow() is deprecated... fix!
+    # TODO: do not use factory here; we want this set to None when we EDIT an existing one.
+    #  Make it the responsibility of the caller to set the start time when ctreating a new TE.
     start: datetime = Field(default_factory=datetime.utcnow)
     stop: Optional[datetime] = Field(
         default=None,

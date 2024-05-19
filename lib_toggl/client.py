@@ -14,6 +14,7 @@ from .account import ENDPOINT as ACCOUNT_ENDPOINT
 from .account import Account
 from .const import USER_AGENT
 from .time_entries import CREATE_ENDPOINT as TIME_ENTRY_CREATE_ENDPOINT
+from .time_entries import EDIT_ENDPOINT as TIME_ENTRY_EDIT_ENDPOINT
 from .time_entries import ENDPOINT as TIME_ENTRY_ENDPOINT
 from .time_entries import STOP_ENDPOINT as TIME_ENTRY_STOP_ENDPOINT
 from .time_entries import TimeEntry
@@ -33,7 +34,7 @@ class Toggl:
     # default API user agent value
     _user_agent = USER_AGENT
 
-    def __init__(self, api_key: str = None) -> None:
+    def __init__(self, api_key: str | None) -> None:
         self.headers = {}
         self._session = aiohttp.ClientSession()
 
@@ -192,8 +193,34 @@ class Toggl:
                 log.debug("here is resp (text) ", extra={"resp": await resp.text()})
             return await resp.json()
 
+    async def do_put_request(
+        self, url: str, data: dict | None = None
+    ) -> dict[str, Any] | None:
+        """_summary_
+
+        Args:
+            url (str): _description_
+            data (dict | None, optional): _description_. Defaults to None.
+
+        Returns:
+            dict[str, Any] | None: _description_
+        """
+        await self._pre_flight_check()
+
+        log.debug("do_put_request", extra={"data": data})
+        # TODO: error handling, lots of ways network/json parse can fail...
+        async with self._session.put(
+            url, headers=self.headers, auth=self._auth, data=data
+        ) as resp:
+            if resp.status != 200:
+                resp.raise_for_status()
+                log.debug("here is resp (text) ", extra={"resp": await resp.text()})
+            return await resp.json()
+
+
     # Actual methods for fetching things from Toggl
     ##
+
     async def get_workspaces(self) -> [Workspace]:
         """_summary_
 
@@ -283,6 +310,22 @@ class Toggl:
         data = te.json(exclude_none=True)
         log.debug("create_new_time_entry. To make: %s", data)
         d = await self.do_post_request(_url, data=data)
+        return TimeEntry(**d)
+
+
+    async def edit_time_entry(self, te: TimeEntry) -> TimeEntry:
+        """Edits an existing Time Entry
+
+        Args:
+            te (TimeEntry): Object representing the desired state.
+
+        Returns:
+            TimeEntry: Object representing the presisted state.
+        """
+        _url = TIME_ENTRY_EDIT_ENDPOINT(te.workspace_id, te.id)
+        data = te.json(exclude_none=True)
+        log.debug("create_new_time_entry. To make: %s", data)
+        d = await self.do_put_request(_url, data=data)
         return TimeEntry(**d)
 
     async def stop_time_entry(self, te: TimeEntry) -> TimeEntry:

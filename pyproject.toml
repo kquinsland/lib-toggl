@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "lib-toggl"
-version = "0.1.3"
+version = "0.1.5"
 description = "Asynchronous Python library for the Toggl API."
 authors = ["Karl Quinsalnd <karl@karlquinsland.com>"]
 readme = "README.md"
