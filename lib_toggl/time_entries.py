@@ -3,7 +3,7 @@ Parse/Coercion done by Pydantic
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from pydantic.v1 import BaseModel, Field
@@ -72,10 +72,12 @@ class TimeEntry(BaseModel):
     #   returned by the API. We store the new/current/correct field value and set up aliases
     #   so the old field names still work.
     ##
-    # TODO: do I want to frozen everything? May want to support updating a TE in the future...?
     workspace_id: int = Field(description="Workspace ID, required.", default=None)
+
     project_id: Optional[int] = Field(description="Project ID, optional.", default=None)
+
     task_id: Optional[int] = Field(alias="tid", default=None)
+
     user_id: int = Field(
         default=None,
         description="Time Entry creator ID, if omitted will use the requester user ID",
@@ -93,17 +95,23 @@ class TimeEntry(BaseModel):
     )
 
     # Toggl API wants everything in RFC3339 format which is just a specific flavor of ISO8601
-    # Internally, just store everything as a datetime with UTC timezone and only convert to
+    # Internally, just store everything as a TZ aware datetime with UTC timezone and only convert to
     #   RFC3339 when we need to send it to the API.
     ##
-    # TODO: pylance says .utcnow() is deprecated... fix!
-    # TODO: do not use factory here; we want this set to None when we EDIT an existing one.
-    #  Make it the responsibility of the caller to set the start time when ctreating a new TE.
-    start: datetime = Field(default_factory=datetime.utcnow)
+    # Note that Toggle API **requires** that a start datetime be provided when creating a new Time Entry.
+    # No longer going to enforce this / default to now() in model creation as there are some valid use cases for
+    #   a model that does not have a start time set.
+    # As a convenience, the API client will check for start of None and automatically set to now() during the create() calls.
+    start: Optional[datetime] = Field(
+        default=None,
+        # pylint: disable=line-too-long
+        description="Start `datetime` in UTC, required when creating a new Time Entry, optional when updating an existing one.",
+    )
+
     stop: Optional[datetime] = Field(
         default=None,
         # pylint: disable=line-too-long
-        description="Stop time in UTC, can be omitted if it's still running or created with 'duration'. If 'stop' and 'duration' are provided, values must be consistent (start + duration == stop)",
+        description="Stop `datetime` in UTC, can be omitted if it's still running or created with 'duration'. If 'stop' and 'duration' are provided, values must be consistent (start + duration == stop)",
     )
 
     # Duration in seconds
@@ -113,7 +121,7 @@ class TimeEntry(BaseModel):
     # https://docs.pydantic.dev/2.5/concepts/validators/#before-after-wrap-and-plain-validators
     duration: int = Field(
         default=-1,
-        description="Time entry duration. For running entries should be negative, preferable -1",
+        description="Time entry duration. For running entries should be negative, preferable `-1`",
     )
 
     # Description is required when CREATING, but not required when deleting.
@@ -121,16 +129,18 @@ class TimeEntry(BaseModel):
         default=None, description="Time entry description, optional"
     )
     # Can be "add" or "delete". Used when updating an existing time entry
+    # TODO: this should be an enum?
     tag_action: Optional[str] = Field(pattern=r"^(add|delete)$", default="add")
 
+    # See note below in update_tags() method
     tags: List[str] = Field(
         default=None,
-        description="Tag names, None if tags were not provided or were later deleted",
+        description="Tag names, `None` if tags were not provided or were later deleted",
     )
-
+    # See note below in update_tags() method
     tag_ids: List[int] = Field(
         default=None,
-        description="Tag IDs, None if tags were not provided or were later deleted",
+        description="Tag IDs, `None` if tags were not provided or were later deleted.",
     )
 
     # This field is deprecated for GET endpoints where the value will always be true.
@@ -140,6 +150,7 @@ class TimeEntry(BaseModel):
         repr=False,
         description="Deprecated: Used to create a time entry with a duration but without a stop time. This parameter can be ignored.",
     )
+
     # This appears to be the datetime server got/fulfilled request
     # Isn't something user will supply when creating a Time Entry and doesn't really serve a useful
     #   purpose so we exclude it from the model.
@@ -157,15 +168,40 @@ class TimeEntry(BaseModel):
         repr=False,
         description="Time Entry creator ID, legacy field",
     )
+
     wid: Optional[int] = Field(
         exclude=True, default=None, repr=False, description="Workspace ID, legacy field"
     )
+
     pid: Optional[int] = Field(
         exclude=True, default=None, repr=False, description="Project ID, legacy field"
     )
+
     tid: Optional[int] = Field(
         exclude=True, default=None, repr=False, description="Task ID, legacy field"
     )
+
+    def update_tags(self, new_tags: List[str]) -> None:
+        """
+        A wrapper to abstract the logic of updating the tags on a TimeEntry object.
+
+        The Toggl API docs don't spell this out explicitly, but it appears that the API uses the `tag_ids` field
+            over the `tags` field for the purposes of updating a Time Entry.
+
+        E.G.: if tag_ids is set with valid tag IDs and tags containts a valid tag that does not yet exist,
+            the time entry will not be updated with the combination of the two, it will just have the tag_ids.
+
+        To avoid confusion, we can just set the `tag_ids` field to None but retain the full list of strings user
+            wants in the `tags` field. This way, when the Time Entry is sent to API, their backend logic will
+            do the "does this string already have a tag ID?" and update the Time Entry accordingly with
+            the existing / new tag IDs.
+        """
+        _tags = dict(zip(self.tags, self.tag_ids))
+        log.debug(
+            f"Updating tags on TimeEntry {self.description} -> ({_tags}) with new tags: {new_tags}"
+        )
+        self.tag_ids = []
+        self.tags = new_tags
 
 
 # TODO: general logic implementation around what fields are required / should be validated

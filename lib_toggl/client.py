@@ -1,9 +1,10 @@
 """
 Very basic Toggl API wrapper
 """
+
 import logging
-from datetime import datetime
-from typing import Any
+from datetime import datetime, UTC
+from typing import Any, List
 
 import aiohttp
 from pyrfc3339 import generate
@@ -38,9 +39,9 @@ class Toggl:
         self.headers = {}
         self._session = aiohttp.ClientSession()
 
-        self._account: Account = None
-        self._current_time_entry: TimeEntry = None
-        self._workspaces: [Workspace] = None
+        self._account: Account | None = None
+        self._current_time_entry: TimeEntry | None = None
+        self._workspaces: List[Workspace] | None = None
 
         self._auth = None
 
@@ -67,7 +68,7 @@ class Toggl:
 
     @property
     def api_key(self) -> str | None:
-        """_summary_"""
+        """Current API key."""
         return self._api_key
 
     @api_key.setter
@@ -88,22 +89,22 @@ class Toggl:
         )
 
     @property
-    async def account(self) -> Account:
-        """_summary_"""
+    async def account(self) -> Account | None:
+        """Toggle Account details."""
         if self._account is None:
             self._account = await self.get_account_details()
         return self._account
 
     @property
-    async def workspaces(self) -> [Workspace]:
-        """_summary_"""
+    async def workspaces(self) -> List[Workspace]:
+        """List of Workspaces the user has access to."""
         if self._workspaces is None:
             self._workspaces = await self.get_workspaces()
         return self._workspaces
 
     @property
     async def current_time_entry(self) -> TimeEntry | None:
-        """_summary_"""
+        """Currently running Time Entry, if one exists."""
         if self._current_time_entry is None:
             self._current_time_entry = await self.get_current_time_entry()
         return self._current_time_entry
@@ -217,11 +218,10 @@ class Toggl:
                 log.debug("here is resp (text) ", extra={"resp": await resp.text()})
             return await resp.json()
 
-
     # Actual methods for fetching things from Toggl
     ##
 
-    async def get_workspaces(self) -> [Workspace]:
+    async def get_workspaces(self) -> List[Workspace]:
         """_summary_
 
         Returns:
@@ -230,14 +230,19 @@ class Toggl:
         log.debug("get_workspaces is alive...")
         ws = await self.do_get_request(WORKSPACE_ENDPOINT)
         log.debug("get_workspaces", extra={"ws": ws})
+        # As of now, not a ton of error handling in the do_*_request functions.
+        # We do basic checking here to make sure pylance is happy.
+        if ws is None:
+            log.debug("No workspaces found")
+            return []
         return [Workspace(**x) for x in ws]
 
     async def get_time_entries(
         self,
         start_date: datetime,
         end_date: datetime,
-    ) -> [TimeEntry]:
-        """_summary_"""
+    ) -> List[TimeEntry]:
+        """Fetches Time Entries for the specified date range."""
         log.info("get_time_entries is alive...")
 
         # Start and end date must be provided together
@@ -255,6 +260,11 @@ class Toggl:
         params = {"start_date": _start, "end_date": _end}
 
         d = await self.do_get_request(TIME_ENTRY_ENDPOINT, data=params)
+        # As of now, not a ton of error handling in the do_*_request functions.
+        # We do basic checking here to make sure pylance is happy.
+        if d is None:
+            log.debug("No time entries found")
+            return []
         return [TimeEntry(**x) for x in d]
 
     async def get_current_time_entry(self) -> TimeEntry | None:
@@ -272,10 +282,10 @@ class Toggl:
 
         # pylint: disable-next=broad-except
         except Exception as exc:
-            log.debug("err", exec=exc)
+            log.debug("err", exc_info=exc)
         return None
 
-    async def get_account_details(self) -> Account:
+    async def get_account_details(self) -> Account | None:
         """_summary_
 
         Returns:
@@ -283,23 +293,34 @@ class Toggl:
         """
         d = await self.do_get_request(ACCOUNT_ENDPOINT)
         log.debug("get_account_details", extra={"data": d})
+        # As of now, not a ton of error handling in the do_*_request functions.
+        # We do basic checking here to make sure pylance is happy.
+        if d is None:
+            return None
         self._account = Account(**d)
         return await self.account
 
-    async def create_new_time_entry(self, te: TimeEntry) -> TimeEntry:
+    async def create_new_time_entry(self, te: TimeEntry) -> TimeEntry | None:
         """Creates a new Toggl Track Time Entry
 
         Args:
-            te (TimeEntry): _description_
+            te (TimeEntry): Time Entry object to create. If the `start` property is not set, it will be set to the current time.
 
         Returns:
             TimeEntry: _description_
         """
+        log.debug("create_new_time_entry is alive...")
         # This will be the first POST/PUT request
         # Also need to collect / validate data
         # Can leverage pydantic for that, but need to be mindful of that class / what data ONLY comes back with a GET
-        # Versus what data should be populated for  a PUT
+        # Versus what data should be populated for a PUT
         _url = TIME_ENTRY_CREATE_ENDPOINT(te.workspace_id)
+
+        if not te.start:
+            te.start = datetime.now(UTC)
+            # generate(datetime.now(UTC), utc=True, accept_naive=True)
+            log.debug(f"te.start was not set, setting to {te.start}")
+
         # Render out to JSON, exclude the things that user didn't set
         # In testing, it looks like tag_ids will override tags.
         # If tags is set to a list of strings but tag_action is not set or tag_ids is an empty list, the server will NOT
@@ -310,10 +331,13 @@ class Toggl:
         data = te.json(exclude_none=True)
         log.debug("create_new_time_entry. To make: %s", data)
         d = await self.do_post_request(_url, data=data)
+        # As of now, not a ton of error handling in the do_*_request functions.
+        # We do basic checking here to make sure pylance is happy.
+        if d is None:
+            return None
         return TimeEntry(**d)
 
-
-    async def edit_time_entry(self, te: TimeEntry) -> TimeEntry:
+    async def edit_time_entry(self, te: TimeEntry) -> TimeEntry | None:
         """Edits an existing Time Entry
 
         Args:
@@ -324,11 +348,15 @@ class Toggl:
         """
         _url = TIME_ENTRY_EDIT_ENDPOINT(te.workspace_id, te.id)
         data = te.json(exclude_none=True)
-        log.debug("create_new_time_entry. To make: %s", data)
+        log.debug("edit_time_entry. sending: %s", data)
         d = await self.do_put_request(_url, data=data)
+        # As of now, not a ton of error handling in the do_*_request functions.
+        # We do basic checking here to make sure pylance is happy.
+        if d is None:
+            return None
         return TimeEntry(**d)
 
-    async def stop_time_entry(self, te: TimeEntry) -> TimeEntry:
+    async def stop_time_entry(self, te: TimeEntry) -> TimeEntry | None:
         """Stops a running Time Entry
 
         Args:
@@ -354,6 +382,10 @@ class Toggl:
         )
         _url = TIME_ENTRY_STOP_ENDPOINT(te.workspace_id, te.id)
         d = await self.do_patch_request(_url)
+        # As of now, not a ton of error handling in the do_*_request functions.
+        # We do basic checking here to make sure pylance is happy.
+        if d is None:
+            return None
         return TimeEntry(**d)
 
 

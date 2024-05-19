@@ -48,7 +48,7 @@ async def main():
         log.info("Creating a new Time Entry")
 
         body = {
-            "description": "Testing from poc.py!",
+            "description": "Testing from `lib-toggl/poc.py`!",
             "tags": ["test-tag"],
             "workspace_id": workspace_id,
         }
@@ -57,8 +57,36 @@ async def main():
         log.debug(f"new_time_entry: {new_time_entry}")
         created_te = await api.create_new_time_entry(new_time_entry)
         log.info(f"created_te: {created_te}")
+        if created_te is None:
+            log.error("Failed to create time entry")
+            sys.exit(1)
 
-        log.info("Sleeping before stopping time entry")
+        log.info("Sleeping before editing time entry to add tags...")
+        sleep(15)
+
+        # Clear all associated tags and set new tags
+        # created_te.update_tags(["another-tag"])
+        # Trying with a tag that I know has an ID already
+        # created_te.update_tags(["test.tag1"])
+        # That does not work, either.
+        # It could be that for updating, tag_ids is required and tags is ignored?
+        created_te.tag_ids = [123456789]
+        updated_te = await api.edit_time_entry(created_te)
+        if updated_te is None:
+            log.error("Failed to update time entry")
+            sys.exit(1)
+        log.debug(f"updated_te: {updated_te}")
+        sys.exit()
+
+        # created_te.tag_action = "remove"
+        # created_te.tags =
+        # updated_te = await api.edit_time_entry(created_te)
+        # if updated_te is None:
+        #     log.error("Failed to update time entry")
+        #     sys.exit(1)
+        # log.debug(f"updated_te: {updated_te}")
+
+        log.info("Sleeping before stopping time entry...")
         sleep(10)
         result = await api.stop_time_entry(created_te)
         log.info("stop_time_entry", extra={"result": result})
