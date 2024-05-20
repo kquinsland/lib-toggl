@@ -18,6 +18,7 @@ from .time_entries import CREATE_ENDPOINT as TIME_ENTRY_CREATE_ENDPOINT
 from .time_entries import EDIT_ENDPOINT as TIME_ENTRY_EDIT_ENDPOINT
 from .time_entries import ENDPOINT as TIME_ENTRY_ENDPOINT
 from .time_entries import STOP_ENDPOINT as TIME_ENTRY_STOP_ENDPOINT
+from .tags import Tag, TAGS_ENDPOINT
 from .time_entries import TimeEntry
 from .workspace import ENDPOINT as WORKSPACE_ENDPOINT
 from .workspace import Workspace
@@ -236,6 +237,18 @@ class Toggl:
             log.debug("No workspaces found")
             return []
         return [Workspace(**x) for x in ws]
+
+    async def get_tags(self, workspace_id: int) -> List[Tag]:
+        log.debug(f"get_tags ({workspace_id}) is alive...")
+        _endpoint = TAGS_ENDPOINT(workspace_id)
+        log.debug(f"endpoint: {_endpoint}")
+        tags = await self.do_get_request(TAGS_ENDPOINT(workspace_id))
+        # As of now, not a ton of error handling in the do_*_request functions.
+        # We do basic checking here to make sure pylance is happy.
+        if tags is None:
+            log.debug("No workspaces found")
+            return []
+        return [Tag(**x) for x in tags]
 
     async def get_time_entries(
         self,
