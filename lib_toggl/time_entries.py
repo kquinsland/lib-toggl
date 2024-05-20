@@ -3,7 +3,7 @@ Parse/Coercion done by Pydantic
 """
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import List, Optional
 
 from pydantic.v1 import BaseModel, Field
@@ -128,16 +128,17 @@ class TimeEntry(BaseModel):
     description: Optional[str] = Field(
         default=None, description="Time entry description, optional"
     )
-    # Can be "add" or "delete". Used when updating an existing time entry
-    # TODO: this should be an enum?
+
+    # See note in lib_toggl/util/tags.py
     tag_action: Optional[str] = Field(pattern=r"^(add|delete)$", default="add")
 
-    # See note below in update_tags() method
+    # See note in lib_toggl/util/tags.py
     tags: List[str] = Field(
         default=None,
         description="Tag names, `None` if tags were not provided or were later deleted",
     )
-    # See note below in update_tags() method
+
+    # See note in lib_toggl/util/tags.py
     tag_ids: List[int] = Field(
         default=None,
         description="Tag IDs, `None` if tags were not provided or were later deleted.",
@@ -180,28 +181,6 @@ class TimeEntry(BaseModel):
     tid: Optional[int] = Field(
         exclude=True, default=None, repr=False, description="Task ID, legacy field"
     )
-
-    def update_tags(self, new_tags: List[str]) -> None:
-        """
-        A wrapper to abstract the logic of updating the tags on a TimeEntry object.
-
-        The Toggl API docs don't spell this out explicitly, but it appears that the API uses the `tag_ids` field
-            over the `tags` field for the purposes of updating a Time Entry.
-
-        E.G.: if tag_ids is set with valid tag IDs and tags containts a valid tag that does not yet exist,
-            the time entry will not be updated with the combination of the two, it will just have the tag_ids.
-
-        To avoid confusion, we can just set the `tag_ids` field to None but retain the full list of strings user
-            wants in the `tags` field. This way, when the Time Entry is sent to API, their backend logic will
-            do the "does this string already have a tag ID?" and update the Time Entry accordingly with
-            the existing / new tag IDs.
-        """
-        _tags = dict(zip(self.tags, self.tag_ids))
-        log.debug(
-            f"Updating tags on TimeEntry {self.description} -> ({_tags}) with new tags: {new_tags}"
-        )
-        self.tag_ids = []
-        self.tags = new_tags
 
 
 # TODO: general logic implementation around what fields are required / should be validated
