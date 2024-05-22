@@ -1,11 +1,12 @@
 """Various type/class definitions for the Organizations bit of the Toggle API
 Parse/Coercion done by Pydantic
 """
+
 import logging
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, List, Optional
 
-from pydantic.v1 import BaseModel, Field
+from pydantic.v1 import BaseModel, Field, validator
 from pyrfc3339 import generate
 
 from .const import BASE, DEFAULT_CREATED_BY
@@ -16,23 +17,63 @@ ENDPOINT = f"{BASE}/me/time_entries"
 
 
 @staticmethod
-# pylint: disable=invalid-name
-def CREATE_ENDPOINT(workspace_id: int = None) -> str:
-    """Returns the endpoint for creating a new time entry in the specified workspace"""
+def validate_time_entry_id(time_entry_id: Any) -> None:
+    """Raises Value Error if time_entry_id is not a positive integer.
+    Allow for `Any` as the type to allow for None to be passed in as a value
+    """
+    if not time_entry_id:
+        raise ValueError("time_entry_id must be specified")
+    if not isinstance(time_entry_id, int):
+        raise TypeError("time_entry_id must be an integer")
+    if time_entry_id <= 0:
+        raise ValueError("time_entry_id must be positive.")
+
+
+@staticmethod
+def validate_workspace_id(workspace_id: Any) -> None:
+    """Raises Value Error if workspace_id is not a positive integer
+    Allow for `Any` as the type to allow for None to be passed in as a value
+    """
     if not workspace_id:
         raise ValueError("workspace_id must be specified")
+    if not isinstance(workspace_id, int):
+        raise TypeError("workspace_id must be an integer")
+    if workspace_id <= 0:
+        raise ValueError("workspace_id must be positive.")
+
+
+@staticmethod
+# pylint: disable=invalid-name
+def CREATE_ENDPOINT(workspace_id: int) -> str:
+    """Returns the endpoint for creating a new time entry in the specified workspace"""
+    validate_workspace_id(workspace_id)
     return f"{BASE}/workspaces/{workspace_id}/time_entries"
 
 
 @staticmethod
 # pylint: disable=invalid-name
-def STOP_ENDPOINT(workspace_id: int = None, time_entry_id: int = None) -> str:
+def STOP_ENDPOINT(workspace_id: int, time_entry_id: int) -> str:
     """Returns the endpoint for creating a new time entry in the specified workspace"""
-    if not workspace_id:
-        raise ValueError("workspace_id must be specified")
-    if not time_entry_id:
-        raise ValueError("time_entry_id must be specified")
+    validate_workspace_id(workspace_id)
+    validate_time_entry_id(time_entry_id)
     return f"{BASE}/workspaces/{workspace_id}/time_entries/{time_entry_id}/stop"
+
+
+@staticmethod
+# pylint: disable=invalid-name
+def EDIT_ENDPOINT(workspace_id: int, time_entry_id: int) -> str:
+    """Returns the endpoint for editing specific time entry in the specified workspace"""
+    validate_workspace_id(workspace_id)
+    validate_time_entry_id(time_entry_id)
+    return f"{BASE}/workspaces/{workspace_id}/time_entries/{time_entry_id}"
+
+
+@staticmethod
+# pylint: disable=invalid-name
+def EXPLICIT_ENDPOINT(time_entry_id: int) -> str:
+    """Returns the endpoint for editing specific time entry in the specified workspace"""
+    validate_time_entry_id(time_entry_id)
+    return f"{BASE}/me/time_entries/{time_entry_id}"
 
 
 class TimeEntry(BaseModel):
@@ -60,10 +101,12 @@ class TimeEntry(BaseModel):
     #   returned by the API. We store the new/current/correct field value and set up aliases
     #   so the old field names still work.
     ##
-    # TODO: do I want to frozen everything? May want to support updating a TE in the future...?
     workspace_id: int = Field(description="Workspace ID, required.", default=None)
+
     project_id: Optional[int] = Field(description="Project ID, optional.", default=None)
+
     task_id: Optional[int] = Field(alias="tid", default=None)
+
     user_id: int = Field(
         default=None,
         description="Time Entry creator ID, if omitted will use the requester user ID",
@@ -81,13 +124,23 @@ class TimeEntry(BaseModel):
     )
 
     # Toggl API wants everything in RFC3339 format which is just a specific flavor of ISO8601
-    # Internally, just store everything as a datetime with UTC timezone and only convert to
+    # Internally, just store everything as a TZ aware datetime with UTC timezone and only convert to
     #   RFC3339 when we need to send it to the API.
-    start: datetime = Field(default_factory=datetime.utcnow)
+    ##
+    # Note that Toggle API **requires** that a start datetime be provided when creating a new Time Entry.
+    # No longer going to enforce this / default to now() in model creation as there are some valid use cases for
+    #   a model that does not have a start time set.
+    # As a convenience, the API client will check for start of None and automatically set to now() during the create() calls.
+    start: Optional[datetime] = Field(
+        default=None,
+        # pylint: disable=line-too-long
+        description="Start `datetime` in UTC, required when creating a new Time Entry, optional when updating an existing one.",
+    )
+
     stop: Optional[datetime] = Field(
         default=None,
         # pylint: disable=line-too-long
-        description="Stop time in UTC, can be omitted if it's still running or created with 'duration'. If 'stop' and 'duration' are provided, values must be consistent (start + duration == stop)",
+        description="Stop `datetime` in UTC, can be omitted if it's still running or created with 'duration'. If 'stop' and 'duration' are provided, values must be consistent (start + duration == stop)",
     )
 
     # Duration in seconds
@@ -97,24 +150,24 @@ class TimeEntry(BaseModel):
     # https://docs.pydantic.dev/2.5/concepts/validators/#before-after-wrap-and-plain-validators
     duration: int = Field(
         default=-1,
-        description="Time entry duration. For running entries should be negative, preferable -1",
+        description="Time entry duration. For running entries should be negative, preferable `-1`",
     )
 
     # Description is required when CREATING, but not required when deleting.
     description: Optional[str] = Field(
         default=None, description="Time entry description, optional"
     )
-    # Can be "add" or "delete". Used when updating an existing time entry
+
     tag_action: Optional[str] = Field(pattern=r"^(add|delete)$", default="add")
 
-    tags: List[str] = Field(
-        default=None,
-        description="Tag names, None if tags were not provided or were later deleted",
+    tags: Optional[List[str]] = Field(
+        default=[],
+        description="Tag names",
     )
 
-    tag_ids: List[int] = Field(
-        default=None,
-        description="Tag IDs, None if tags were not provided or were later deleted",
+    tag_ids: Optional[List[int]] = Field(
+        default=[],
+        description="Tag IDs.",
     )
 
     # This field is deprecated for GET endpoints where the value will always be true.
@@ -124,6 +177,7 @@ class TimeEntry(BaseModel):
         repr=False,
         description="Deprecated: Used to create a time entry with a duration but without a stop time. This parameter can be ignored.",
     )
+
     # This appears to be the datetime server got/fulfilled request
     # Isn't something user will supply when creating a Time Entry and doesn't really serve a useful
     #   purpose so we exclude it from the model.
@@ -141,17 +195,41 @@ class TimeEntry(BaseModel):
         repr=False,
         description="Time Entry creator ID, legacy field",
     )
+
     wid: Optional[int] = Field(
         exclude=True, default=None, repr=False, description="Workspace ID, legacy field"
     )
+
     pid: Optional[int] = Field(
         exclude=True, default=None, repr=False, description="Project ID, legacy field"
     )
+
     tid: Optional[int] = Field(
         exclude=True, default=None, repr=False, description="Task ID, legacy field"
     )
 
+    # The Toggl API continues to "amaze".
+    # It is absolutely possible to get a reply that looks like this:
+    #       "tags":null,"tag_ids":[]
+    # Which when parsed as json results in tags = None, tag_ids = []
+    # Internally, Pydantic's Optional[] is a Union of the type and None.
+    # This means that we technically are allowed to pass None as a value for tags and tag_ids.
+    # This makes things simple if the user wants to create a TimeEntry with no tags, for example.
+    # But internally, we do not want to expose `None` to the user as a valid value for tags.
+    # The list of tags/tags_ids should always be a list, even if it's an empty list.
+    ##
+    # pylint: disable=no-self-argument
+    @validator("tags", "tag_ids", always=True)
+    def tags_must_not_be_null(cls, v):
+        """Ensures that tag/tag_ids is always an empty list not None
 
-# TODO: general logic implementation around what fields are required / should be validated
-#   when user is creating a new TE versus updating one versus getting current from API.
-# TODO: fix: TypeError: 'TimeEntry' object is not subscriptable
+        Args:
+            v (_type_): Value of the field to be validated
+
+        Returns:
+            _type_: `v` if `v` is not None, else an empty list
+        """
+        if v is None:
+            return []
+        else:
+            return v

@@ -1,2 +1,5 @@
 # API key is sensitive
 .env
+
+# As is tag map from get_tags.py
+tag_map.json

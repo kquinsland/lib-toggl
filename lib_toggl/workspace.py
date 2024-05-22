@@ -1,6 +1,7 @@
 """Various type/class definitions for the Workspaces bit of the Toggle API
 Parse/Coercion done by Pydantic
 """
+
 import logging
 from datetime import datetime
 from typing import Any, Optional
@@ -197,3 +198,5 @@ class Workspace(BaseModel):
         default=None,
         description="TODO (unconfirmed)",
     )
+
+    # TODO: tags seem to belong to a workspace, so move the get_tags() method here?

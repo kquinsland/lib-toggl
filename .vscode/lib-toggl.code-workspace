@@ -6,6 +6,9 @@
   ],
   "settings": {
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+    "python.autoComplete.extraPaths": [
+      "${workspaceFolder}/.venv/lib/python3.12/site-packages"
+    ],
     "cSpell.words": [
       "aiodns",
       "aiohttp",
@@ -43,6 +46,9 @@
       "virtualenv",
       "virtualenvs",
       "webassets"
+    ],
+    "python.analysis.extraPaths": [
+      "${workspaceFolder}/.venv/lib/python3.12/site-packages"
     ]
   },
   "extensions": {
