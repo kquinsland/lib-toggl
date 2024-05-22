@@ -4,7 +4,7 @@ Parse/Coercion done by Pydantic
 
 import logging
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from pydantic.v1 import BaseModel, Field, validator
 from pyrfc3339 import generate
@@ -17,42 +17,62 @@ ENDPOINT = f"{BASE}/me/time_entries"
 
 
 @staticmethod
-# pylint: disable=invalid-name
-def CREATE_ENDPOINT(workspace_id: int | None) -> str:
-    """Returns the endpoint for creating a new time entry in the specified workspace"""
+def validate_time_entry_id(time_entry_id: Any) -> None:
+    """Raises Value Error if time_entry_id is not a positive integer.
+    Allow for `Any` as the type to allow for None to be passed in as a value
+    """
+    if not time_entry_id:
+        raise ValueError("time_entry_id must be specified")
+    if not isinstance(time_entry_id, int):
+        raise TypeError("time_entry_id must be an integer")
+    if time_entry_id <= 0:
+        raise ValueError("time_entry_id must be positive.")
+
+
+@staticmethod
+def validate_workspace_id(workspace_id: Any) -> None:
+    """Raises Value Error if workspace_id is not a positive integer
+    Allow for `Any` as the type to allow for None to be passed in as a value
+    """
     if not workspace_id:
         raise ValueError("workspace_id must be specified")
+    if not isinstance(workspace_id, int):
+        raise TypeError("workspace_id must be an integer")
+    if workspace_id <= 0:
+        raise ValueError("workspace_id must be positive.")
+
+
+@staticmethod
+# pylint: disable=invalid-name
+def CREATE_ENDPOINT(workspace_id: int) -> str:
+    """Returns the endpoint for creating a new time entry in the specified workspace"""
+    validate_workspace_id(workspace_id)
     return f"{BASE}/workspaces/{workspace_id}/time_entries"
 
 
 @staticmethod
 # pylint: disable=invalid-name
-def STOP_ENDPOINT(workspace_id: int | None, time_entry_id: int | None) -> str:
+def STOP_ENDPOINT(workspace_id: int, time_entry_id: int) -> str:
     """Returns the endpoint for creating a new time entry in the specified workspace"""
-    if not workspace_id:
-        raise ValueError("workspace_id must be specified")
-    if not time_entry_id:
-        raise ValueError("time_entry_id must be specified")
+    validate_workspace_id(workspace_id)
+    validate_time_entry_id(time_entry_id)
     return f"{BASE}/workspaces/{workspace_id}/time_entries/{time_entry_id}/stop"
 
 
 @staticmethod
 # pylint: disable=invalid-name
-def EDIT_ENDPOINT(workspace_id: int | None, time_entry_id: int | None) -> str:
+def EDIT_ENDPOINT(workspace_id: int, time_entry_id: int) -> str:
     """Returns the endpoint for editing specific time entry in the specified workspace"""
-    if not workspace_id:
-        raise ValueError("workspace_id must be specified")
-    if not time_entry_id:
-        raise ValueError("time_entry_id must be specified")
+    validate_workspace_id(workspace_id)
+    validate_time_entry_id(time_entry_id)
     return f"{BASE}/workspaces/{workspace_id}/time_entries/{time_entry_id}"
 
 
 @staticmethod
 # pylint: disable=invalid-name
-def EXPLICIT_ENDPOINT(time_entry_id: int | None) -> str:
+def EXPLICIT_ENDPOINT(time_entry_id: int) -> str:
     """Returns the endpoint for editing specific time entry in the specified workspace"""
-    if not time_entry_id:
-        raise ValueError("time_entry_id must be specified")
+    validate_time_entry_id(time_entry_id)
     return f"{BASE}/me/time_entries/{time_entry_id}"
 
 

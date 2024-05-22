@@ -2,32 +2,30 @@
 
 import pytest
 
-from lib_toggl import client
+from lib_toggl.client import Toggl
+from lib_toggl.time_entries import TimeEntry
 
 
 @pytest.mark.asyncio
-async def test_client_init():
-    """Tests that client can be instantiated correctly and that all calls before setting the api_key fail"""
-    api_client = client.Toggl()
-    assert api_client is not None
-    assert api_client.api_key is None
-
-    # Try to get current time entry w/o api_key
-    with pytest.raises(ValueError):
-        await api_client.get_current_time_entry()
-
-    # Set API key to invalid value, get ValueError
-    with pytest.raises(ValueError):
-        api_client.api_key = ""
-
-    # Set API key to valid value, get no ValueError
-    try:
-        api_client.api_key = "1234567890"
-        assert True
-    # pylint: disable=broad-except
-    except Exception as ex:
-        assert False, f"'Setting API key didn't work! ex: '{ex}'"
+async def test_client_init_no_api_key():
+    """Tests that client requires an API key"""
+    with pytest.raises(TypeError):
+        # pylint: disable=no-value-for-parameter
+        _ = client.Toggl()  # pyright: ignore reportCallIssue
 
 
-# TODO: lots more tests, specifically around the optional/required fields in Pydantic models
-# TODO: mock the async http
+@pytest.mark.asyncio
+async def test_client_init_with_api_key():
+    """Tests that client requires an API key"""
+    _key = "fake_api_key"
+    x = client.Toggl(_key)
+    assert x.api_key == _key
+
+
+##
+# Most of client is boilerplate for API calls and I'm not in the mood to mock aiohttp since the data
+#   is almost always directly piped into Pydantic models.
+# The update_tags() function does have some non-standard logic that's worth testing.
+# But it will require mocking out some of the API calls.
+# Let's call this a TODO for now.
+##

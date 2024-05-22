@@ -19,7 +19,7 @@ from .time_entries import EDIT_ENDPOINT as TIME_ENTRY_EDIT_ENDPOINT
 from .time_entries import ENDPOINT as TIME_ENTRY_ENDPOINT
 from .time_entries import EXPLICIT_ENDPOINT
 from .time_entries import STOP_ENDPOINT as TIME_ENTRY_STOP_ENDPOINT
-from .time_entries import TimeEntry
+from .time_entries import TimeEntry, validate_time_entry_id, validate_workspace_id
 from .workspace import ENDPOINT as WORKSPACE_ENDPOINT
 from .workspace import Workspace
 
@@ -37,7 +37,20 @@ except ImportError:
 
 # pylint: disable=too-many-instance-attributes
 class Toggl:
-    """Basic wrapper for the Toggl API"""
+    """Processes the client request
+
+    Raises:
+        ValueError: If the request method is not supported.
+        ValueError: If the request URL is not valid.
+        ValueError: If the request headers are not properly formatted.
+        ValueError: If the request body is not properly formatted.
+        ValueError: If the request timeout is not a positive number.
+        ValueError: If the request fails due to network issues.
+        ValueError: If the server responds with an error status code.
+
+    Returns:
+        Response: The server's response to the client's request.
+    """
 
     # Basically everything is JSON
     _headers = {"content-type": "application/json"}
@@ -106,7 +119,7 @@ class Toggl:
         return self._account
 
     @property
-    async def workspaces(self) -> List[Workspace]:
+    async def workspaces(self) -> List[Workspace] | None:
         """List of Workspaces the user has access to."""
         if self._workspaces is None:
             self._workspaces = await self.get_workspaces()
@@ -122,7 +135,7 @@ class Toggl:
     async def _pre_flight_check(self):
         """Common pre-request checks"""
         if self._api_key is None:
-            raise ValueError("api_key must be set before making requests")
+            raise ValueError("api_key must be set before making requests.")
 
         if self._session.closed:
             log.error("session is closed, creating new session")
@@ -131,15 +144,17 @@ class Toggl:
         # Merge common headers with instance specific headers
         self.headers.update(self._headers)
 
-    async def do_get_request(self, url: str, data: dict | None = None) -> Any | None:
-        """_summary_
+    async def do_get_request(
+        self, url: str, data: dict | None = None
+    ) -> dict[str, Any]:
+        """Does a GET request to the specified URL.
 
         Args:
-            url (str): _description_
-            data (dict | None, optional): _description_. Defaults to None.
+            url (str): URL to send the GET request to.
+            data (dict | None, optional): A dictionary to be passed as query parameters. Defaults to None.
 
         Returns:
-            _type_: _description_
+            Response: The server's response to the GET request.
         """
 
         await self._pre_flight_check()
@@ -153,18 +168,15 @@ class Toggl:
                 resp.raise_for_status()
             return await resp.json()
 
-    async def do_post_request(
-        self, url: str, data_as_json_str: str | None = None
-    ) -> dict[str, Any] | None:
-        """_summary_
+    async def do_post_request(self, url: str, data_as_json_str: str) -> dict[str, Any]:
+        """Does a POST request to the specified URL.
 
         Args:
-            url (str): _description_
-            data_as_json_str (str | None, optional): string encoded JSON data.
-                Not using built in json kwarg because we need to use the json encoder in pydantic so we can exclude None values.
+            url (str): URL to send the POST request to.
+            data_as_json_str (str): String encoded JSON data. Not using built-in json kwarg because we need to use the json encoder in pydantic so we can exclude None values.
 
         Returns:
-            _type_: _description_
+            Response: The server's response to the POST request.
         """
 
         await self._pre_flight_check()
@@ -181,15 +193,15 @@ class Toggl:
 
     async def do_patch_request(
         self, url: str, data: dict | None = None
-    ) -> dict[str, Any] | None:
-        """_summary_
+    ) -> dict[str, Any]:
+        """Performs a PATCH request to the specified URL.
 
         Args:
-            url (str): _description_
-            data (dict | None, optional): _description_. Defaults to None.
+            url (str): URL to send the PATCH request to.
+            data (dict | None, optional): A dictionary to be sent as JSON in the body of the request. Defaults to None.
 
         Returns:
-            _type_: _description_
+            Response: The server's response to the PATCH request.
         """
         await self._pre_flight_check()
 
@@ -203,17 +215,15 @@ class Toggl:
                 resp.raise_for_status()
             return await resp.json()
 
-    async def do_put_request(
-        self, url: str, data_as_json_str: str | None = None
-    ) -> Any | None:
-        """_summary_
+    async def do_put_request(self, url: str, data_as_json_str: str) -> dict[str, Any]:
+        """Does PUT request to the specified URL.
 
         Args:
-            url (str): _description_
-            data (dict | None, optional): _description_. Defaults to None.
+            url (str): URL to send the PUT request to.
+            data (str): JSON encoded string to send in the body of the request.
 
         Returns:
-            dict[str, Any] | None: _description_
+            dict[str, Any]: JSON response from the server.
         """
         await self._pre_flight_check()
 
@@ -228,14 +238,15 @@ class Toggl:
 
             return await resp.json()
 
+    ##
     # Actual methods for fetching things from Toggl
     ##
 
     async def get_workspaces(self) -> List[Workspace]:
-        """_summary_
+        """Gets a list of Workspaces the user has access to.
 
         Returns:
-            [Workspace]: _description_
+            [Workspace]: List of Workspace objects.
         """
         log.debug("get_workspaces is alive...")
         ws = await self.do_get_request(WORKSPACE_ENDPOINT)
@@ -245,20 +256,38 @@ class Toggl:
         if ws is None:
             log.debug("No workspaces found")
             return []
-        return [Workspace(**x) for x in ws]
+        # Assuming nothing went wrong, `ws` will be a list with one json object per workspace
+        return [Workspace(**x) for x in ws]  # pyright: ignore reportCallIssue
 
     async def get_tags(self, workspace_id: int) -> List[Tag]:
-        log.debug(f"get_tags ({workspace_id}) is alive...")
+        """Returns a list of Tags for the specified workspace.
+
+        Args:
+            workspace_id (int): Workspace ID to fetch tags for.
+
+        Returns:
+            List[Tag]: List of Tag objects.
+        """
         tags = await self.do_get_request(TAGS_ENDPOINT(workspace_id))
+        log.debug("get_tags", extra={"tags": tags})
         # As of now, not a ton of error handling in the do_*_request functions.
         # We do basic checking here to make sure pylance is happy.
         if tags is None:
             log.debug("No workspaces found")
             return []
-        return [Tag(**x) for x in tags]
+        # Assuming nothing went wrong, `tags` will be a list with one json object per tag
+        return [Tag(**x) for x in tags]  # pyright: ignore reportCallIssue
 
     async def create_tag(self, workspace_id: int, tag_name: str) -> Tag | None:
-        log.debug(f"create_tag ({workspace_id}) is alive...")
+        """Creates a new Tag in the specified workspace.
+
+        Args:
+            workspace_id (int): Workspace ID to create the tag in.
+            tag_name (str): Name of the tag to create.
+
+        Returns:
+            Tag | None: Tag object if successful, else None.
+        """
         body = {"name": tag_name, "workspace_id": workspace_id}
         _t = Tag(**body)
         data = _t.json(exclude_none=True)
@@ -278,7 +307,19 @@ class Toggl:
         start_date: datetime,
         end_date: datetime,
     ) -> List[TimeEntry]:
-        """Fetches Time Entries for the specified date range."""
+        """Retrieves a list of Time Entries within a specific date range
+
+        Args:
+            start_date (datetime): The start date of the range.
+            end_date (datetime): The end date of the range.
+
+        Raises:
+            ValueError: If the start_date is later than the end_date.
+            ValueError: If either the start_date or end_date is not a valid datetime.
+
+        Returns:
+            List[TimeEntry]: A list of TimeEntry objects within the specified date range.
+        """
         log.info("get_time_entries is alive...")
 
         # Start and end date must be provided together
@@ -295,13 +336,17 @@ class Toggl:
         # When
         params = {"start_date": _start, "end_date": _end}
 
-        d = await self.do_get_request(TIME_ENTRY_ENDPOINT, data=params)
+        time_enttrries = await self.do_get_request(TIME_ENTRY_ENDPOINT, data=params)
+        log.debug("get_time_entries", extra={"time_enttrries": time_enttrries})
         # As of now, not a ton of error handling in the do_*_request functions.
         # We do basic checking here to make sure pylance is happy.
-        if d is None:
+        if time_enttrries is None:
             log.debug("No time entries found")
             return []
-        return [TimeEntry(**x) for x in d]
+        # Assuming nothing went wrong, `time_enttrries` will be a list with one json object per time entry
+        return [
+            TimeEntry(**x) for x in time_enttrries  # pyright: ignore reportCallIssue
+        ]
 
     async def get_current_time_entry(self) -> TimeEntry | None:
         """Returns active Time Entry if one is running, else None"""
@@ -322,7 +367,14 @@ class Toggl:
         return None
 
     async def get_time_entry_by_id(self, time_entry_id: int) -> TimeEntry | None:
-        """Returns active Time Entry if one is running, else None"""
+        """Retrieves a specific Time Entry by its ID
+
+        Args:
+            time_entry_id (int): The ID of the Time Entry to retrieve.
+
+        Returns:
+            TimeEntry | None: The TimeEntry object with the given ID if it exists, else None.
+        """
         log.info("get_current_time_entry is alive...")
 
         te = await self.do_get_request(f"{EXPLICIT_ENDPOINT(time_entry_id)}")
@@ -338,13 +390,11 @@ class Toggl:
             log.debug("err", exc_info=exc)
         return None
 
-    # https://api.track.toggl.com/api/v9/me/time_entries/{time_entry_id}
-
     async def get_account_details(self) -> Account | None:
-        """_summary_
+        """Retrieves the account details
 
         Returns:
-            Account: _description_
+            Account | None: The Account object containing the details of the current account if the operation is successful, else None.
         """
         d = await self.do_get_request(ACCOUNT_ENDPOINT)
         log.debug("get_account_details", extra={"data": d})
@@ -361,20 +411,24 @@ class Toggl:
         Args:
             te (TimeEntry): Time Entry object to create. If the `start` property is not set, it will be set to the current time.
 
+        Raises:
+            ValueError: If the provided TimeEntry object is not valid.
+            ValueError: If the operation on the TimeEntry object fails.
+
         Returns:
-            TimeEntry: _description_
+            TimeEntry: The newly created TimeEntry object if the operation is successful, else None.
         """
         log.debug("create_new_time_entry is alive...")
         # This will be the first POST/PUT request
         # Also need to collect / validate data
         # Can leverage pydantic for that, but need to be mindful of that class / what data ONLY comes back with a GET
         # Versus what data should be populated for a PUT
+        ##
         _url = TIME_ENTRY_CREATE_ENDPOINT(te.workspace_id)
 
         if not te.start:
             te.start = datetime.now(UTC)
-            # generate(datetime.now(UTC), utc=True, accept_naive=True)
-            log.debug(f"te.start was not set, setting to {te.start}")
+            log.debug("te.start was not set, setting to %s", te.start)
 
         # Render out to JSON, exclude the things that user didn't set
         # In testing, it looks like tag_ids will override tags.
@@ -400,10 +454,15 @@ class Toggl:
             te (TimeEntry): Object representing the desired state.
 
         Returns:
-            TimeEntry: Object representing the presisted state.
+            TimeEntry | None: Object representing the presisted state or None on failure.
         """
+        # If user creates a TimeEntry directly and tries to use _persist_time_entry instead of create()
+        validate_workspace_id(te.workspace_id)
+        validate_time_entry_id(te.id)
 
-        _url = TIME_ENTRY_EDIT_ENDPOINT(te.workspace_id, te.id)
+        _url = TIME_ENTRY_EDIT_ENDPOINT(
+            te.workspace_id, te.id  # pyright: ignore reportArgumentType
+        )
         data = te.json(exclude_none=True)
         log.debug("_persist_time_entry. sending: %s", data)
         d = await self.do_put_request(_url, data_as_json_str=data)
@@ -428,16 +487,14 @@ class Toggl:
             local_te (TimeEntry): Object representing the desired state.
 
         Returns:
-            TimeEntry: Object representing the presisted state.
+            TimeEntry | None: Object representing the presisted state or None on failure.
         """
         log.debug("edit_time_entry is alive. Starting with %s", local_te)
-        if local_te.workspace_id is None:
-            raise ValueError("TimeEntry.workspace_id is required")
-        if local_te.id is None:
-            raise ValueError("TimeEntry.id is required")
 
         # To determine if we have any tags to update, we first need to ask the server what IT thinks the passed in TE looks like
-        remote_te = await self.get_time_entry_by_id(local_te.id)
+        remote_te = await self.get_time_entry_by_id(
+            local_te.id  # pyright: ignore reportArgumentType
+        )
         log.debug("remote_te: %s", remote_te)
         if remote_te is None:
             log.error(
@@ -462,20 +519,21 @@ class Toggl:
         return await self._persist_time_entry(updated_te)
 
     async def stop_time_entry(self, te: TimeEntry) -> TimeEntry | None:
-        """Stops a running Time Entry
+        """Summary
 
         Args:
-            te (TimeEntry): _description_
+            te (TimeEntry): The TimeEntry object to be processed.
+
+        Raises:
+            ValueError: If the provided TimeEntry object is not valid.
+            ValueError: If the operation on the TimeEntry object fails.
 
         Returns:
-            TimeEntry: _description_
+            TimeEntry | None: The processed TimeEntry object if successful, None otherwise.
         """
-
+        validate_workspace_id(te.workspace_id)
+        validate_time_entry_id(te.id)
         # Don't bother stopping a TE that doesn't have required info or has already been stopped
-        if te.workspace_id is None:
-            raise ValueError("workspace_id is required")
-        if te.id is None:
-            raise ValueError("id is required")
         if te.stop is not None:
             raise ValueError("Time Entry is already stopped")
         if te.start is None:
@@ -485,7 +543,10 @@ class Toggl:
             "stop_time_entry is alive...",
             extra={"id": te.id, "workspace": te.workspace_id},
         )
-        _url = TIME_ENTRY_STOP_ENDPOINT(te.workspace_id, te.id)
+        _url = TIME_ENTRY_STOP_ENDPOINT(
+            te.workspace_id, te.id  # pyright: ignore reportArgumentType
+        )
+
         d = await self.do_patch_request(_url)
         # As of now, not a ton of error handling in the do_*_request functions.
         # We do basic checking here to make sure pylance is happy.
@@ -517,18 +578,16 @@ class Toggl:
         This way, even if there's an error removing tags, the Time Entry will still have the new tags that the user wanted.
         They can always manually search for the old tag(s) and remove them if necessary.
         """
-        if te.workspace_id is None:
-            raise ValueError("workspace_id is required")
-        if te.id is None:
-            raise ValueError("id is required")
+        validate_workspace_id(te.workspace_id)
+        validate_time_entry_id(te.id)
         if new_tags is None:
-            raise ValueError("new_tags is required")
+            raise ValueError("new_tags is required.")
 
-        log.debug("Updating tags on TimeEntry: %s", te.description)
+        log.debug("Updating tags on TimeEntry: %s.", te.description)
         # TODO: much better error handling
         known_tags = await self.get_tags(te.workspace_id)
         if known_tags is None:
-            log.error("Failed to get tags for workspace: %s", te.workspace_id)
+            log.error("Failed to get tags for workspace: %s.", te.workspace_id)
             return
 
         # Even though get_tags should never return a Tag with either field as None
@@ -538,16 +597,19 @@ class Toggl:
             for tag in known_tags
             if tag.name is not None and tag.id is not None
         }
-        log.debug("Found %s known tags: %s", len(known_tags), known_tags)
+        log.debug("Found %s known tags: %s.", len(known_tags), known_tags)
 
         # Figure out what tags need to be created, added and removed
         tags_to_create = set(new_tags) - set(known_tags.keys())
         log.debug("%s Tags to create: %s", len(tags_to_create), tags_to_create)
 
-        tags_to_add = set(new_tags) - set(te.tags)
+        # Pylance only sees that `tags` is Optional[List[str]]. It knows that Pydanitc's Optional means None is possible.
+        # It can't see that there is a post validation function that replaces None with [].
+        tags_to_add = set(new_tags) - set(te.tags)  # pyright: ignore reportArgumentType
         log.debug("%s Tags to add: %s", len(tags_to_add), tags_to_add)
 
-        tags_to_remove = set(te.tags) - set(new_tags)
+        # fmt: off
+        tags_to_remove = set(te.tags) - set(new_tags) # pyright: ignore reportArgumentType
         log.debug("%s Tags to remove: %s", len(tags_to_remove), tags_to_remove)
 
         if (
@@ -595,8 +657,11 @@ class Toggl:
                 continue
             # Update the Time Entry with the new tag ID and name to be sure.
             # API appears to be inconsistent about weather the string or the ID matters more depending on the action!?!!
-            te.tag_ids.append(known_tags[tag])
-            te.tags.append(tag)
+            ##
+            # pylint: disable=no-member
+            te.tag_ids.append(known_tags[tag]) # pyright: ignore reportOptionalMemberAccess
+            # pylint: disable=no-member
+            te.tags.append(tag) # pyright: ignore reportOptionalMemberAccess
 
         updated_te = await self._persist_time_entry(te)
         if updated_te is None:
