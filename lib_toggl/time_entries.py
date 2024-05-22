@@ -6,7 +6,7 @@ import logging
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic.v1 import BaseModel, Field
+from pydantic.v1 import BaseModel, Field, validator
 from pyrfc3339 import generate
 
 from .const import BASE, DEFAULT_CREATED_BY
@@ -42,9 +42,18 @@ def EDIT_ENDPOINT(workspace_id: int | None, time_entry_id: int | None) -> str:
     """Returns the endpoint for editing specific time entry in the specified workspace"""
     if not workspace_id:
         raise ValueError("workspace_id must be specified")
-    if not workspace_id:
+    if not time_entry_id:
         raise ValueError("time_entry_id must be specified")
     return f"{BASE}/workspaces/{workspace_id}/time_entries/{time_entry_id}"
+
+
+@staticmethod
+# pylint: disable=invalid-name
+def EXPLICIT_ENDPOINT(time_entry_id: int | None) -> str:
+    """Returns the endpoint for editing specific time entry in the specified workspace"""
+    if not time_entry_id:
+        raise ValueError("time_entry_id must be specified")
+    return f"{BASE}/me/time_entries/{time_entry_id}"
 
 
 class TimeEntry(BaseModel):
@@ -129,19 +138,16 @@ class TimeEntry(BaseModel):
         default=None, description="Time entry description, optional"
     )
 
-    # See note in lib_toggl/util/tags.py
     tag_action: Optional[str] = Field(pattern=r"^(add|delete)$", default="add")
 
-    # See note in lib_toggl/util/tags.py
-    tags: List[str] = Field(
-        default=None,
-        description="Tag names, `None` if tags were not provided or were later deleted",
+    tags: Optional[List[str]] = Field(
+        default=[],
+        description="Tag names",
     )
 
-    # See note in lib_toggl/util/tags.py
-    tag_ids: List[int] = Field(
-        default=None,
-        description="Tag IDs, `None` if tags were not provided or were later deleted.",
+    tag_ids: Optional[List[int]] = Field(
+        default=[],
+        description="Tag IDs.",
     )
 
     # This field is deprecated for GET endpoints where the value will always be true.
@@ -182,7 +188,28 @@ class TimeEntry(BaseModel):
         exclude=True, default=None, repr=False, description="Task ID, legacy field"
     )
 
+    # The Toggl API continues to "amaze".
+    # It is absolutely possible to get a reply that looks like this:
+    #       "tags":null,"tag_ids":[]
+    # Which when parsed as json results in tags = None, tag_ids = []
+    # Internally, Pydantic's Optional[] is a Union of the type and None.
+    # This means that we technically are allowed to pass None as a value for tags and tag_ids.
+    # This makes things simple if the user wants to create a TimeEntry with no tags, for example.
+    # But internally, we do not want to expose `None` to the user as a valid value for tags.
+    # The list of tags/tags_ids should always be a list, even if it's an empty list.
+    ##
+    # pylint: disable=no-self-argument
+    @validator("tags", "tag_ids", always=True)
+    def tags_must_not_be_null(cls, v):
+        """Ensures that tag/tag_ids is always an empty list not None
 
-# TODO: general logic implementation around what fields are required / should be validated
-#   when user is creating a new TE versus updating one versus getting current from API.
-# TODO: fix: TypeError: 'TimeEntry' object is not subscriptable
+        Args:
+            v (_type_): Value of the field to be validated
+
+        Returns:
+            _type_: `v` if `v` is not None, else an empty list
+        """
+        if v is None:
+            return []
+        else:
+            return v

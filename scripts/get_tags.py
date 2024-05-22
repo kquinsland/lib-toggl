@@ -3,10 +3,10 @@
 Dump tag name/id pairs to a file for reference
 """
 import asyncio
+import json
 import logging
 import os
 import sys
-import json
 
 from lib_toggl.client import Toggl
 

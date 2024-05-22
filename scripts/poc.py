@@ -15,6 +15,9 @@ from lib_toggl.time_entries import TimeEntry
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
+# Time to pause between steps to allow for manual verification
+SLEEP_TIME_SECONDS = 5
+
 
 async def main():
     """Does the needful"""
@@ -61,33 +64,33 @@ async def main():
             log.error("Failed to create time entry")
             sys.exit(1)
 
-        log.info("Sleeping before editing time entry to add tags...")
-        sleep(15)
+        log.info(
+            f"Sleeping {SLEEP_TIME_SECONDS}s before editing time entry to add tags..."
+        )
+        sleep(SLEEP_TIME_SECONDS)
 
-        # Clear all associated tags and set new tags
-        # created_te.update_tags(["another-tag"])
-        # Trying with a tag that I know has an ID already
-        # created_te.update_tags(["test.tag1"])
-        # That does not work, either.
-        # It could be that for updating, tag_ids is required and tags is ignored?
-        created_te.tag_ids = [123456789]
-        updated_te = await api.edit_time_entry(created_te)
-        if updated_te is None:
-            log.error("Failed to update time entry")
-            sys.exit(1)
-        log.debug(f"updated_te: {updated_te}")
-        sys.exit()
+        # This will REMOVE the `test-tag` from the time entry and replace it with `tag-that-might-not-exist`.
+        # As the name implies, the tag might not exist. It will be created if it does not.
+        created_te.tags = ["tag-that-might-not-exist"]
+        # And just for giggles, update the description, too.
+        created_te.description = "Updated from `lib-toggl/poc.py`!"
+        # This will result in a few API calls to create tag if needed and then update the time entry tags and description.
+        correct_te = await api.edit_time_entry(created_te)
+        log.info(f"correct_te: {correct_te}")
 
-        # created_te.tag_action = "remove"
-        # created_te.tags =
-        # updated_te = await api.edit_time_entry(created_te)
-        # if updated_te is None:
-        #     log.error("Failed to update time entry")
-        #     sys.exit(1)
-        # log.debug(f"updated_te: {updated_te}")
+        log.info(
+            f"Sleeping {SLEEP_TIME_SECONDS}s before clearing tags on time entry..."
+        )
+        sleep(SLEEP_TIME_SECONDS)
 
-        log.info("Sleeping before stopping time entry...")
-        sleep(10)
+        created_te.tags = []
+        created_te.description = "Updated from `lib-toggl/poc.py` with no tags!"
+        correct_te = await api.edit_time_entry(created_te)
+        log.info(f"correct_te: {correct_te}")
+
+        log.info(f"Sleeping {SLEEP_TIME_SECONDS}s before stopping time entry...")
+        sleep(SLEEP_TIME_SECONDS)
+
         result = await api.stop_time_entry(created_te)
         log.info("stop_time_entry", extra={"result": result})
 
