@@ -4,7 +4,12 @@ import logging
 from datetime import datetime
 from typing import Optional
 
-from pydantic.v1 import BaseModel, Field
+try:
+    # Pydantic v2 ships a copy of v1.
+    from pydantic.v1 import BaseModel, Field
+except ImportError:
+    # Home Assistant does not yet support v2.
+    from pydantic import BaseModel, Field
 
 from .const import BASE
 
