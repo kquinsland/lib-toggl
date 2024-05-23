@@ -696,6 +696,7 @@ class Toggl:
 #   aiohttp.client_exceptions.ClientResponseError: 401, message='Unauthorized',
 # Trying to stop an entry on a workspace that's not mine
 #   aiohttp.client_exceptions.ClientResponseError: 403, message='Forbidden',
+#       409 when trying to stop a time entry that's already stopped... etc
 # When sending a request BODY with verb GET (or just a bad request in general)
 #   aiohttp.client_exceptions.ClientResponseError: 400, message='Bad Request',
 ##

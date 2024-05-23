@@ -3,6 +3,7 @@ Constants for the Toggl API.
 Implements a subset of the complete API.
 
 """
+
 from . import __version__ as version
 
 BASE = "https://api.track.toggl.com/api/v9"
