@@ -524,20 +524,11 @@ class Toggl:
         Args:
             te (TimeEntry): The TimeEntry object to be processed.
 
-        Raises:
-            ValueError: If the provided TimeEntry object is not valid.
-            ValueError: If the operation on the TimeEntry object fails.
-
         Returns:
             TimeEntry | None: The processed TimeEntry object if successful, None otherwise.
         """
         validate_workspace_id(te.workspace_id)
         validate_time_entry_id(te.id)
-        # Don't bother stopping a TE that doesn't have required info or has already been stopped
-        if te.stop is not None:
-            raise ValueError("Time Entry is already stopped")
-        if te.start is None:
-            raise ValueError("Time Entry has no start time")
 
         log.info(
             "stop_time_entry is alive...",
