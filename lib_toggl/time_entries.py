@@ -8,10 +8,10 @@ from typing import Any, List, Optional
 
 try:
     # Pydantic v2 ships a copy of v1.
-    from pydantic.v1 import BaseModel, Field, validator
+    from pydantic.v1 import BaseModel, Field
 except ImportError:
     # Home Assistant does not yet support v2.
-    from pydantic import BaseModel, Field, validator
+    from pydantic import BaseModel, Field
 
 from pyrfc3339 import generate
 
@@ -82,7 +82,7 @@ def EXPLICIT_ENDPOINT(time_entry_id: int) -> str:
     return f"{BASE}/me/time_entries/{time_entry_id}"
 
 
-class TimeEntry(BaseModel):
+class TimeEntry(BaseModel):  # pyright: ignore reportGeneralTypeIssues
     """Class representing the Toggl organization object.
     Leverages dataclass to cut down on boilerplate code.
     See: https://developers.track.toggl.com/docs/api/time_entries#200
@@ -167,12 +167,12 @@ class TimeEntry(BaseModel):
     tag_action: Optional[str] = Field(pattern=r"^(add|delete)$", default="add")
 
     tags: Optional[List[str]] = Field(
-        default=[],
+        default=None,
         description="Tag names",
     )
 
     tag_ids: Optional[List[int]] = Field(
-        default=[],
+        default=None,
         description="Tag IDs.",
     )
 
@@ -213,29 +213,3 @@ class TimeEntry(BaseModel):
     tid: Optional[int] = Field(
         exclude=True, default=None, repr=False, description="Task ID, legacy field"
     )
-
-    # The Toggl API continues to "amaze".
-    # It is absolutely possible to get a reply that looks like this:
-    #       "tags":null,"tag_ids":[]
-    # Which when parsed as json results in tags = None, tag_ids = []
-    # Internally, Pydantic's Optional[] is a Union of the type and None.
-    # This means that we technically are allowed to pass None as a value for tags and tag_ids.
-    # This makes things simple if the user wants to create a TimeEntry with no tags, for example.
-    # But internally, we do not want to expose `None` to the user as a valid value for tags.
-    # The list of tags/tags_ids should always be a list, even if it's an empty list.
-    ##
-    # pylint: disable=no-self-argument
-    @validator("tags", "tag_ids", always=True)
-    def tags_must_not_be_null(cls, v):
-        """Ensures that tag/tag_ids is always an empty list not None
-
-        Args:
-            v (_type_): Value of the field to be validated
-
-        Returns:
-            _type_: `v` if `v` is not None, else an empty list
-        """
-        if v is None:
-            return []
-        else:
-            return v
