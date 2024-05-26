@@ -431,12 +431,13 @@ class Toggl:
             log.debug("te.start was not set, setting to %s", te.start)
 
         # Render out to JSON, exclude the things that user didn't set
-        # In testing, it looks like tag_ids will override tags.
+        # In testing, it looks like tag_ids will override tags; the list of strings is virtually meaningless!
         # If tags is set to a list of strings but tag_action is not set or tag_ids is an empty list, the server will NOT
         #   set the tags and will create a new time track entry with the empty list of tags.
         # So, we default both tags and tag_ids to None and let the user pick which to set.
         # TODO: i'll want to do more sophisticated validation / coercion to handle this case.
         #   e.g: tag_action should remain None unless tags is a list with at least one string, then default to add
+        ##
         data = te.json(exclude_none=True)
         log.debug("create_new_time_entry. To make: %s", data)
         d = await self.do_post_request(_url, data_as_json_str=data)
@@ -447,14 +448,14 @@ class Toggl:
         return TimeEntry(**d)
 
     async def _persist_time_entry(self, te: TimeEntry) -> TimeEntry | None:
-        """Lower level level API that attemmpts to update state for an existing Time Entry.
+        """Lower level level API that attempts to update state for an existing Time Entry.
         Can be used directly, is meant to be used by higher level API functions like edit_time_entry().
 
         Args:
             te (TimeEntry): Object representing the desired state.
 
         Returns:
-            TimeEntry | None: Object representing the presisted state or None on failure.
+            TimeEntry | None: Object representing the persisted state or None on failure.
         """
         # If user creates a TimeEntry directly and tries to use _persist_time_entry instead of create()
         validate_workspace_id(te.workspace_id)
@@ -473,7 +474,7 @@ class Toggl:
         return TimeEntry(**d)
 
     async def edit_time_entry(self, local_te: TimeEntry) -> TimeEntry | None:
-        """High level API that attemmpts to update state for an existing Time Entry.
+        """High level API that attempts to update state for an existing Time Entry.
 
         Modifying some aspects of a Time Entry are trivial, such as the description.
         Tags are a bit more convoluted. Depending on the passed time entry and the desired state
@@ -487,7 +488,7 @@ class Toggl:
             local_te (TimeEntry): Object representing the desired state.
 
         Returns:
-            TimeEntry | None: Object representing the presisted state or None on failure.
+            TimeEntry | None: Object representing the persisted state or None on failure.
         """
         log.debug("edit_time_entry is alive. Starting with %s", local_te)
 
