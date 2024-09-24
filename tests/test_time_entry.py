@@ -166,8 +166,8 @@ def test_time_entry_instantiation_with_valid_data():
     assert valid_no_tags_ids.description == "Test Description"
 
     # pylint: disable=use-implicit-booleaness-not-comparison
-    assert valid_no_tags.tags == []
+    assert valid_no_tags.tags is None
     assert valid_no_tags_ids.tags == []
 
     assert valid_no_tags.tag_ids == []
-    assert valid_no_tags_ids.tag_ids == []
+    assert valid_no_tags_ids.tag_ids is None
