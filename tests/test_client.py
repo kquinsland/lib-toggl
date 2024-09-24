@@ -11,14 +11,14 @@ async def test_client_init_no_api_key():
     """Tests that client requires an API key"""
     with pytest.raises(TypeError):
         # pylint: disable=no-value-for-parameter
-        _ = client.Toggl()  # pyright: ignore reportCallIssue
+        _ = Toggl()  # pyright: ignore reportCallIssue
 
 
 @pytest.mark.asyncio
 async def test_client_init_with_api_key():
     """Tests that client requires an API key"""
     _key = "fake_api_key"
-    x = client.Toggl(_key)
+    x = Toggl(_key)
     assert x.api_key == _key
 
 
