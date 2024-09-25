@@ -47,6 +47,7 @@
       "stdlib",
       "structlog",
       "togglpy",
+      "toggl",
       "virtualenv",
       "virtualenvs",
       "webassets"
