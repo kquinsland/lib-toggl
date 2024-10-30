@@ -17,7 +17,7 @@ from .const import BASE
 ENDPOINT = f"{BASE}/me"
 
 
-class Account(BaseModel):
+class Account(BaseModel):  # pyright: ignore[reportGeneralTypeIssues]
     """
     https://developers.track.toggl.com/docs/api/me#200
     """

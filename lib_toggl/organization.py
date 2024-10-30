@@ -15,7 +15,7 @@ from .const import BASE
 ENDPOINT = f"{BASE}/organizations"
 
 
-class Organization(BaseModel):
+class Organization(BaseModel):  # pyright: ignore[reportGeneralTypeIssues]
     """Class representing the Toggl organization object.
     Leverages dataclass to cut down on boilerplate code.
     See: https://developers.track.toggl.com/docs/api/workspaces#200

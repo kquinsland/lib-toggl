@@ -1,4 +1,5 @@
-"""lib-toggl
+"""
+lib-toggl
 """
 
 from importlib.metadata import PackageNotFoundError, version

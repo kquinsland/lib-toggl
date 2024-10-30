@@ -20,14 +20,14 @@ log = logging.getLogger(__name__)
 ENDPOINT = f"{BASE}/workspaces"
 
 
-class CSVUpload(BaseModel):
+class CSVUpload(BaseModel):  # pyright: ignore[reportGeneralTypeIssues]
     """_summary_"""
 
     at: datetime
     log_id: int
 
 
-class Subscription(BaseModel):
+class Subscription(BaseModel):  # pyright: ignore[reportGeneralTypeIssues]
     """Machine generated class representing the Toggl Subscription object."""
 
     auto_renew: bool
@@ -55,7 +55,7 @@ class Subscription(BaseModel):
     workspace_id: int
 
 
-class Workspace(BaseModel):
+class Workspace(BaseModel):  # pyright: ignore[reportGeneralTypeIssues]
     """Class representing the Toggl Workspace object.
     Leverages dataclass to cut down on boilerplate code.
     See: https://developers.track.toggl.com/docs/api/workspaces#200
