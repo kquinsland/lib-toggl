@@ -101,21 +101,21 @@ def test_edit_endpoint_with_valid_workspace_id_invalid_te():
 
 
 def test_explicit_endpoint_with_valid_te_id():
-    time_entey_id = 456
-    expected_endpoint = f"{BASE}/me/time_entries/{time_entey_id}"
-    assert EXPLICIT_ENDPOINT(time_entey_id) == expected_endpoint
+    time_entry_id = 456
+    expected_endpoint = f"{BASE}/me/time_entries/{time_entry_id}"
+    assert EXPLICIT_ENDPOINT(time_entry_id) == expected_endpoint
 
 
 def test_explicit_endpoint_with_zero_te_id():
-    time_entey_id = 0
+    time_entry_id = 0
     with pytest.raises(ValueError):
-        EXPLICIT_ENDPOINT(time_entey_id)
+        EXPLICIT_ENDPOINT(time_entry_id)
 
 
 def test_explicit_endpoint_with_negative_workspace_id():
-    time_entey_id = -123
+    time_entry_id = -123
     with pytest.raises(ValueError):
-        EXPLICIT_ENDPOINT(time_entey_id)
+        EXPLICIT_ENDPOINT(time_entry_id)
 
 
 def test_explicit_endpoint_with_none_workspace_id():
@@ -133,7 +133,7 @@ def test_explicit_endpoint_with_none_workspace_id():
 
 
 def test_time_entry_instantiation_with_valid_data():
-    """Asside from the inconsistent behavior and docs, the basic Pydantic/Field() logic is sound.
+    """Aside from the inconsistent behavior and docs, the basic Pydantic/Field() logic is sound.
     The only real thing that I had to add was when the API would return Tags = None, Tag IDs = [] or
     vice versa.
     """
