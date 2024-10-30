@@ -5,6 +5,12 @@
     }
   ],
   "settings": {
+    "python.analysis.typeCheckingMode": "basic",
+    "python.testing.pytestArgs": [
+      "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
     "python.autoComplete.extraPaths": [
       "${workspaceFolder}/.venv/lib/python3.12/site-packages"
@@ -15,11 +21,13 @@
       "asyncio",
       "autoenv",
       "autofix",
+      "booleaness",
       "cafile",
       "celerybeat",
       "certifi",
       "dataclasses",
       "doctoc",
+      "dunder",
       "duronly",
       "excinfo",
       "htmlcov",
@@ -41,13 +49,14 @@
       "pylint",
       "pyrfc",
       "pytest",
+      "PYTHONPATH",
       "Quinsalnd",
       "scrapy",
       "sdist",
       "stdlib",
       "structlog",
-      "togglpy",
       "toggl",
+      "togglpy",
       "virtualenv",
       "virtualenvs",
       "webassets"

@@ -8,7 +8,6 @@ from typing import Any, List
 import aiohttp
 from pyrfc3339 import generate
 
-from lib_toggl import __version__ as version
 
 from .account import ENDPOINT as ACCOUNT_ENDPOINT
 from .account import Account
@@ -336,17 +335,15 @@ class Toggl:
         # When
         params = {"start_date": _start, "end_date": _end}
 
-        time_enttrries = await self.do_get_request(TIME_ENTRY_ENDPOINT, data=params)
-        log.debug("get_time_entries", extra={"time_enttrries": time_enttrries})
+        time_entries = await self.do_get_request(TIME_ENTRY_ENDPOINT, data=params)
+        log.debug("get_time_entries", extra={"time_entries": time_entries})
         # As of now, not a ton of error handling in the do_*_request functions.
         # We do basic checking here to make sure pylance is happy.
-        if time_enttrries is None:
+        if time_entries is None:
             log.debug("No time entries found")
             return []
-        # Assuming nothing went wrong, `time_enttrries` will be a list with one json object per time entry
-        return [
-            TimeEntry(**x) for x in time_enttrries  # pyright: ignore reportCallIssue
-        ]
+        # Assuming nothing went wrong, `time_entries` will be a list with one json object per time entry
+        return [TimeEntry(**x) for x in time_entries]  # pyright: ignore reportCallIssue
 
     async def get_current_time_entry(self) -> TimeEntry | None:
         """Returns active Time Entry if one is running, else None"""

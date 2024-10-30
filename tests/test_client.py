@@ -3,7 +3,6 @@
 import pytest
 
 from lib_toggl.client import Toggl
-from lib_toggl.time_entries import TimeEntry
 
 
 @pytest.mark.asyncio

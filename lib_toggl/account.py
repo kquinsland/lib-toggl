@@ -17,7 +17,7 @@ from .const import BASE
 ENDPOINT = f"{BASE}/me"
 
 
-class Account(BaseModel):
+class Account(BaseModel):  # pyright: ignore[reportGeneralTypeIssues]
     """
     https://developers.track.toggl.com/docs/api/me#200
     """
@@ -36,7 +36,8 @@ class Account(BaseModel):
     updated_at: datetime
     openid_email: Optional[str]
     openid_enabled: bool
-    country_id: int
+    # See: https://github.com/kquinsland/lib-toggl/issues/15
+    country_id: Optional[int]
     has_password: bool
     at: datetime
     # Analytics?

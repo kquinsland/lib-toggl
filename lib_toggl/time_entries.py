@@ -82,7 +82,7 @@ def EXPLICIT_ENDPOINT(time_entry_id: int) -> str:
     return f"{BASE}/me/time_entries/{time_entry_id}"
 
 
-class TimeEntry(BaseModel):  # pyright: ignore reportGeneralTypeIssues
+class TimeEntry(BaseModel):  # pyright: ignore[reportGeneralTypeIssues]
     """Class representing the Toggl organization object.
     Leverages dataclass to cut down on boilerplate code.
     See: https://developers.track.toggl.com/docs/api/time_entries#200

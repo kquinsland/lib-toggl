@@ -25,7 +25,7 @@ def TAGS_ENDPOINT(workspace_id: int | None) -> str:
     return f"{BASE}/workspaces/{workspace_id}/tags"
 
 
-class Tag(BaseModel):
+class Tag(BaseModel):  # pyright: ignore[reportGeneralTypeIssues]
     """Class representing Tag object.
     Leverages dataclass to cut down on boilerplate code.
     See: https://engineering.toggl.com/docs/api/tags
