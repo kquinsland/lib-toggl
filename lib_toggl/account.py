@@ -5,12 +5,7 @@ Parse/Coercion done by Pydantic
 from datetime import datetime
 from typing import Optional
 
-try:
-    # Pydantic v2 ships a copy of v1.
-    from pydantic.v1 import BaseModel, SecretStr
-except ImportError:
-    # Home Assistant does not yet support v2.
-    from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel, SecretStr
 
 from .const import BASE
 

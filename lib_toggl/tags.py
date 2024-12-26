@@ -4,12 +4,7 @@ import logging
 from datetime import datetime
 from typing import Optional
 
-try:
-    # Pydantic v2 ships a copy of v1.
-    from pydantic.v1 import BaseModel, Field
-except ImportError:
-    # Home Assistant does not yet support v2.
-    from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field
 
 from .const import BASE
 
@@ -19,7 +14,7 @@ log = logging.getLogger(__name__)
 @staticmethod
 # pylint: disable=invalid-name
 def TAGS_ENDPOINT(workspace_id: int | None) -> str:
-    """Returns the endpoint for managing Tags in a particular worksapce."""
+    """Returns the endpoint for managing Tags in a particular workspace."""
     if not workspace_id:
         raise ValueError("workspace_id must be specified")
     return f"{BASE}/workspaces/{workspace_id}/tags"

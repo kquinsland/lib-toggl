@@ -2,13 +2,7 @@
 Parse/Coercion done by Pydantic
 """
 
-try:
-    # Pydantic v2 ships a copy of v1.
-    from pydantic.v1 import BaseModel
-except ImportError:
-    # Home Assistant does not yet support v2.
-    from pydantic import BaseModel
-
+from pydantic import BaseModel
 
 from .const import BASE
 
