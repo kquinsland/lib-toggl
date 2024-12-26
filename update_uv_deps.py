@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# https://gist.github.com/yhoiseth/c80c1e44a7036307e424fce616eed25e
+# https://gist.github.com/yhoiseth/c80c1e44a7036307e424fce616eed25e?permalink_comment_id=5335497
 ##
 # As of right now (very late 2024) there is no simple way to tell UV to update all dependencies in a project.
 # You're basically stuck with rm/add for now.
@@ -7,30 +7,46 @@
 # It _should_ be obviated once this issue is resolved:
 #   https://github.com/astral-sh/uv/issues/6794
 ##
-# Run like:
-#   ❯ uv run --with toml ./update_uv_deps.py
+
+import re
 import subprocess
-from re import Match, match
-from typing import Any
-
-import toml
+import tomllib
+from pathlib import Path
 
 
-def main() -> None:
-    with open("pyproject.toml", "r") as file:
-        pyproject: dict[str, Any] = toml.load(file)
-    dependencies: list[str] = pyproject["project"]["dependencies"]
-    package_name_pattern = r"^[a-zA-Z0-9\-]+"
-    for dependency in dependencies:
-        package_match = match(package_name_pattern, dependency)
-        assert isinstance(package_match, Match)
-        package = package_match.group(0)
-        uv("remove", package)
-        uv("add", package)
+def uv(subcommand: str, packages: list[str], group: str | None):
+    extra_arguments = []
+    if group:
+        extra_arguments.extend(["--group", group])
+
+    subprocess.check_call(["uv", subcommand, *packages, "--no-sync"] + extra_arguments)
 
 
-def uv(command: str, package: str) -> None:
-    subprocess.run(["uv", command, package])
+def main():
+    """WARNING:
+    from the `pyproject.toml` file, this may delete:
+        - comments
+        - upper bounds etc
+        - markers
+        - ordering of dependencies
+    """
+    pyproject = tomllib.loads(Path("pyproject.toml").read_text())
+    package_name_pattern = re.compile(r"^([-a-zA-Z\d]+)(\[[-a-zA-Z\d,]+])?")
+    for group, dependencies in {
+        None: pyproject["project"]["dependencies"],
+        **pyproject["dependency-groups"],
+    }.items():
+        to_remove = []
+        to_add = []
+        for dependency in dependencies:
+            package_match = package_name_pattern.match(dependency)
+            assert package_match, f"invalid package name '{dependency}'"
+            package, extras = package_match.groups()
+            to_remove.append(package)
+            to_add.append(f"{package}{extras or ''}")
+        uv("remove", to_remove, group=group)
+        uv("add", to_add, group=group)
+    subprocess.check_call(["uv", "sync"])
 
 
 if __name__ == "__main__":
