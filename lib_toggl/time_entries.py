@@ -6,13 +6,7 @@ import logging
 from datetime import datetime
 from typing import Any, List, Optional
 
-try:
-    # Pydantic v2 ships a copy of v1.
-    from pydantic.v1 import BaseModel, Field
-except ImportError:
-    # Home Assistant does not yet support v2.
-    from pydantic import BaseModel, Field
-
+from pydantic import BaseModel, Field, FieldSerializationInfo, field_serializer
 from pyrfc3339 import generate
 
 from .const import BASE, DEFAULT_CREATED_BY
