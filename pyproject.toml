@@ -2,11 +2,11 @@
 authors = [{ name = "Karl Quinsalnd" }]
 requires-python = "<4.0,>=3.13"
 dependencies = [
-  "certifi>=2024.12.14",
-  "pyrfc3339>=2.0.1",
-  "aiohttp>=3.11.11",
-  "aiodns>=3.2.0",
-  "pydantic>=2.10.4",
+    "aiodns>=3.2.0",
+    "aiohttp>=3.11.11",
+    "certifi>=2024.12.14",
+    "pydantic>=2.10.4",
+    "pyrfc3339>=2.0.1",
 ]
 name = "lib-toggl"
 description = "Asynchronous Python library for the Toggl API."
@@ -28,14 +28,11 @@ asyncio_mode = "auto"
 
 [dependency-groups]
 dev = [
-  "pytest-asyncio>=0.24.0",
-  "aioresponses>=0.7.7",
-  "pre-commit>=4.0.1",
-  "pytest>=8.3.3",
-  "ruff>=0.7.4",
-  "pre-commit<5.0.0,>=4.0.1",
-  "pytest-asyncio<1.0.0,>=0.23.2",
-  "structlog<25.0.0,>=24.1.0",
+    "aioresponses>=0.7.7",
+    "pytest>=8.3.4",
+    "pytest-asyncio>=0.25.0",
+    "ruff>=0.8.4",
+    "structlog>=24.4.0",
 ]
 
 [build-system]
