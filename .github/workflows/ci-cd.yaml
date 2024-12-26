@@ -40,13 +40,13 @@ jobs:
 
       - name: Check for lint violations
         id: check-lint-rules
-        uses: astral-sh/ruff-action@v1
+        uses: astral-sh/ruff-action@v3
         with:
           args: check --output-format=github .
 
       - name: Check for formatting violations
         id: check-well-formatted
-        uses: astral-sh/ruff-action@v1
+        uses: astral-sh/ruff-action@v3
         # We explicitly do not fix here!
         # Show what would/should be changes and return non-zero if there are any.
         with:
