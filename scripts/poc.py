@@ -2,6 +2,7 @@
 """
 Super simple PoC for playing with the API Client
 """
+
 import asyncio
 import logging
 import os
