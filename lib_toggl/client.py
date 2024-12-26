@@ -459,7 +459,8 @@ class Toggl:
         validate_time_entry_id(te.id)
 
         _url = TIME_ENTRY_EDIT_ENDPOINT(
-            te.workspace_id, te.id  # pyright: ignore reportArgumentType
+            te.workspace_id,
+            te.id,  # pyright: ignore reportArgumentType
         )
         data = te.json(exclude_none=True)
         log.debug("_persist_time_entry. sending: %s", data)
@@ -533,7 +534,8 @@ class Toggl:
             extra={"id": te.id, "workspace": te.workspace_id},
         )
         _url = TIME_ENTRY_STOP_ENDPOINT(
-            te.workspace_id, te.id  # pyright: ignore reportArgumentType
+            te.workspace_id,
+            te.id,  # pyright: ignore reportArgumentType
         )
 
         d = await self.do_patch_request(_url)
