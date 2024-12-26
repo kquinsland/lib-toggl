@@ -1,0 +1,49 @@
+---
+# See docs/release.md for more.
+name: Upload Release to PyPI
+
+# TODO: add workflow_dispatch to trigger manually
+on:
+  release:
+    types: [published]
+
+jobs:
+  test:
+    uses: ./.github/workflows/ci-cd.yaml
+  release-package:
+    name: Build and Release to PyPI
+    runs-on: ubuntu-latest
+    needs: test
+    permissions:
+      # id-token is the scope of the OIDC connection
+      id-token: write
+      # allow reading the repo for checkout
+      contents: read
+
+    env:
+      # This is needed to make sure that the tests can find the package.
+      PYTHONPATH: .
+
+    steps:
+      - name: Checkout repository
+        id: checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Install uv
+        id: setup-uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          ignore-nothing-to-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Build and publish package to PyPI
+        id: build-for-dist-to-pypi
+        run: |
+          sed -i -e "s/0.0.0/${GITHUB_REF#refs/*/}/" pyproject.toml
+          # Dump verbose output to help debug if needed
+          uv build --out-dir dist --verbose
+          uv publish --trusted-publishing=automatic

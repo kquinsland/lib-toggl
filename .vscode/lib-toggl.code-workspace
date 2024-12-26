@@ -16,6 +16,7 @@
       "${workspaceFolder}/.venv/lib/python3.12/site-packages"
     ],
     "cSpell.words": [
+      "autolabeler",
       "aiodns",
       "aiohttp",
       "asyncio",

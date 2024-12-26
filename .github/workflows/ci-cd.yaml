@@ -1,0 +1,92 @@
+name: Python CI
+
+on:
+  # Should it be needed, allow manual triggering
+  workflow_dispatch:
+  # Allow calling from other GHA workflows.
+  # See: https://docs.github.com/en/actions/sharing-automations/reusing-workflows#creating-a-reusable-workflow
+  workflow_call:
+  # As soon as an open PR has modified python files, run the checks.
+  # This flow will re-run the checks if new commits are added to the PR.
+  pull_request:
+    paths:
+      - "**.py"
+
+jobs:
+  lint-format:
+    name: Lint and Format with Ruff
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        id: checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Install uv
+        id: setup-uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          ignore-nothing-to-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        id: setup-python
+        # Note: the github version might be faster since it's cached on runner hosts?
+        run: uv python install
+
+      - name: Check for lint violations
+        id: check-lint-rules
+        uses: astral-sh/ruff-action@v1
+        with:
+          args: check --output-format=github .
+
+      - name: Check for formatting violations
+        id: check-well-formatted
+        uses: astral-sh/ruff-action@v1
+        # We explicitly do not fix here!
+        # Show what would/should be changes and return non-zero if there are any.
+        with:
+          args: format --check --diff .
+
+  # Assuming code doesn't smell, make sure it (still) works.
+  test:
+    name: Run Pytest
+    runs-on: ubuntu-latest
+    # If any of the linting/formatting steps fail, do not run the tests.
+    needs: lint-format
+    env:
+      # This is needed to make sure that the tests can find the package.
+      PYTHONPATH: .
+
+    steps:
+      - name: Checkout repository
+        id: checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Install uv
+        id: setup-uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          ignore-nothing-to-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        id: setup-python
+        # Note: the github version might be faster since it's cached on runner hosts?
+        run: uv python install
+
+      - name: Install the project
+        id: install-dependencies
+        run: uv sync --all-extras --dev
+
+      - name: Run tests
+        id: run-tests
+        run: uv run pytest
