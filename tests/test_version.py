@@ -2,7 +2,6 @@
 Test the version of the package.
 """
 
-import importlib.metadata
 import re
 
 
