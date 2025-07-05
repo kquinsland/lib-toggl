@@ -10,7 +10,7 @@ repos:
   # Standard fille formatting / hygiene
   - repo: https://github.com/pre-commit/pre-commit-hooks
     # See: https://github.com/pre-commit/pre-commit-hooks/releases
-    rev: v4.5.0
+    rev: v4.6.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
