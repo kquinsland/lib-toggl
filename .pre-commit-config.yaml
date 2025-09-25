@@ -39,7 +39,7 @@ repos:
 
   - repo: https://github.com/psf/black
     # See: https://github.com/psf/black/releases
-    rev: 23.12.1
+    rev: 25.9.0
     hooks:
       - id: black
         language_version: python3.11
