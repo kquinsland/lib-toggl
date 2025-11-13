@@ -1,7 +1,4 @@
 ---
-default_language_version:
-  python: python3.11
-
 # TODO: pytest/mypy, pylint ... etc
 # TODO: for docs / doc-gen, use something like this to turn Pydantic into JSON:
 # github.com/Mermeid-Designs/pydantic-hooks
@@ -10,7 +7,7 @@ repos:
   # Standard fille formatting / hygiene
   - repo: https://github.com/pre-commit/pre-commit-hooks
     # See: https://github.com/pre-commit/pre-commit-hooks/releases
-    rev: v4.5.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -27,7 +24,7 @@ repos:
 
   - repo: https://github.com/PyCQA/isort
     # See: https://github.com/PyCQA/isort/releases
-    rev: 5.13.2
+    rev: 7.0.0
     hooks:
       - id: isort
 
@@ -37,21 +34,22 @@ repos:
     hooks:
       - id: python-check-blanket-noqa
 
+  # TODO: replace with ruff?
   - repo: https://github.com/psf/black
     # See: https://github.com/psf/black/releases
-    rev: 23.12.1
+    rev: 25.11.0
     hooks:
       - id: black
-        language_version: python3.11
+        language_version: python3.13
 
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.32.0
+    rev: v1.37.1
     hooks:
       - id: yamllint
         args: [-c=.yamllint.yaml]
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.37.0
+    rev: v0.45.0
     hooks:
       - id: markdownlint
 

@@ -8,7 +8,6 @@ from typing import Any, List
 import aiohttp
 from pyrfc3339 import generate
 
-
 from .account import ENDPOINT as ACCOUNT_ENDPOINT
 from .account import Account
 from .const import USER_AGENT

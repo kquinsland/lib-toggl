@@ -77,10 +77,11 @@ jobs:
           ignore-nothing-to-cache: true
           cache-dependency-glob: "uv.lock"
 
+        # TODO: re-visit. setup-uv should be able to set up a venv if configured to do so.
       - name: Set up Python
         id: setup-python
         # Note: the github version might be faster since it's cached on runner hosts?
-        run: uv python install
+        run: uv python install 3.13
 
       - name: Install the project
         id: install-dependencies
