@@ -24,12 +24,13 @@
       "${workspaceFolder}/.venv/lib/python3.12/site-packages"
     ],
     "cSpell.words": [
-      "autolabeler",
       "aiodns",
       "aiohttp",
+      "aioresponses",
       "asyncio",
       "autoenv",
       "autofix",
+      "autolabeler",
       "booleaness",
       "cafile",
       "celerybeat",
@@ -49,6 +50,7 @@
       "nosetests",
       "peterdavehello",
       "pycache",
+      "pycodestyle",
       "Pydanitc's",
       "pydantic",
       "Pydantic",
