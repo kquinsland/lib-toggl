@@ -6,7 +6,7 @@ dependencies = [
   "pydantic<3.0.0,>=2.12.5",
   "pyrfc3339<3.0,>=2.1.0",
   "aiohttp<4.0.0,>=3.13.3",
-  "aiodns<4.0.0,>=3.6.1",
+  "aiodns<4.1.0,>=4.0.0",
 ]
 name = "lib-toggl"
 description = "Asynchronous Python library for the Toggl API."
