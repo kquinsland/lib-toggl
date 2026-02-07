@@ -6,13 +6,7 @@ import logging
 from datetime import datetime
 from typing import Any, List, Optional
 
-try:
-    # Pydantic v2 ships a copy of v1.
-    from pydantic.v1 import BaseModel, Field
-except ImportError:
-    # Home Assistant does not yet support v2.
-    from pydantic import BaseModel, Field
-
+from pydantic import BaseModel, Field, FieldSerializationInfo, field_serializer
 from pyrfc3339 import generate
 
 from .const import BASE, DEFAULT_CREATED_BY
@@ -87,19 +81,6 @@ class TimeEntry(BaseModel):  # pyright: ignore[reportGeneralTypeIssues]
     Leverages dataclass to cut down on boilerplate code.
     See: https://developers.track.toggl.com/docs/api/time_entries#200
     """
-
-    # For Pydantic v1, a sub `config` class holds the custom serialization config.
-    # See: https://docs.pydantic.dev/1.10/usage/exporting_models/#json_encoders
-    ##
-
-    # pylint: disable=too-few-public-methods
-    class Config:
-        """_summary_"""
-
-        json_encoders = {
-            # All datetimes should be stringified into RFC3339 format
-            datetime: lambda dt: generate(dt, utc=True, accept_naive=True),
-        }
 
     # When user creates a TimeEntry, this will not be known; it is set by server when successful CREATE request
     id: Optional[int] = Field(default=None)
@@ -213,3 +194,38 @@ class TimeEntry(BaseModel):  # pyright: ignore[reportGeneralTypeIssues]
     tid: Optional[int] = Field(
         exclude=True, default=None, repr=False, description="Task ID, legacy field"
     )
+
+    # The start/stop timestamps need to be RFC3339 formatted strings
+    # It would be nice if the same function could be used for both fields but
+    #   there's an implementation detail that makes that difficult.
+    # A typical example is creating a new Time Entry where the stop field will be None and
+    #   the start field will be a datetime object.
+    # The decorator can be configured to apply to both the start and stop field but an exception
+    #   will be thrown if stop is None.
+    # Ok, so set the check_fields input to False and then the decorator will only run on the
+    #   start field, right? NOPE.
+    @field_serializer("start", return_type=str, when_used="unless-none")
+    def serialize_start(self, dt: datetime, _info: FieldSerializationInfo):
+        """Generates rfc3339 formatted string from datetime object
+
+        Args:
+            dt (datetime): _description_
+            _info (FieldSerializationInfo): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        return generate(dt, utc=True, accept_naive=True)
+
+    @field_serializer("stop", return_type=str, when_used="unless-none")
+    def serialize_stop(self, dt: datetime, _info: FieldSerializationInfo):
+        """Generates rfc3339 formatted string from datetime object
+
+        Args:
+            dt (datetime): _description_
+            _info (FieldSerializationInfo): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        return generate(dt, utc=True, accept_naive=True)

@@ -15,9 +15,13 @@ from .tags import TAGS_ENDPOINT, Tag
 from .time_entries import CREATE_ENDPOINT as TIME_ENTRY_CREATE_ENDPOINT
 from .time_entries import EDIT_ENDPOINT as TIME_ENTRY_EDIT_ENDPOINT
 from .time_entries import ENDPOINT as TIME_ENTRY_ENDPOINT
-from .time_entries import EXPLICIT_ENDPOINT
+from .time_entries import (
+    EXPLICIT_ENDPOINT,
+    TimeEntry,
+    validate_time_entry_id,
+    validate_workspace_id,
+)
 from .time_entries import STOP_ENDPOINT as TIME_ENTRY_STOP_ENDPOINT
-from .time_entries import TimeEntry, validate_time_entry_id, validate_workspace_id
 from .workspace import ENDPOINT as WORKSPACE_ENDPOINT
 from .workspace import Workspace
 
@@ -434,7 +438,7 @@ class Toggl:
         # TODO: i'll want to do more sophisticated validation / coercion to handle this case.
         #   e.g: tag_action should remain None unless tags is a list with at least one string, then default to add
         ##
-        data = te.json(exclude_none=True)
+        data = te.model_dump_json(exclude_none=True)
         log.debug("create_new_time_entry. To make: %s", data)
         d = await self.do_post_request(_url, data_as_json_str=data)
         # As of now, not a ton of error handling in the do_*_request functions.
