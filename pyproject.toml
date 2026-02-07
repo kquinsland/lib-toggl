@@ -33,7 +33,7 @@ dev = [
   "pytest>=8.4.2",
   "ruff>=0.15.0",
   "pytest-asyncio<1.0.0,>=0.26.0",
-  "structlog<25.0.0,>=24.4.0",
+  "structlog<25.6.0,>=25.5.0",
   "pre-commit>=4.5.1",
   "ty>=0.0.15",
 ]
