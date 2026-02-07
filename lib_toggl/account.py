@@ -36,4 +36,4 @@ class Account(BaseModel):  # pyright: ignore[reportGeneralTypeIssues]
     has_password: bool
     at: datetime
     # Analytics?
-    intercom_hash: SecretStr
+    intercom_hash: Optional[SecretStr] = None

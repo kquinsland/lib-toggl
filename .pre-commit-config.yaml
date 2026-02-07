@@ -1,7 +1,4 @@
 ---
-default_language_version:
-  python: python3.11
-
 # TODO: pytest/mypy, pylint ... etc
 # TODO: for docs / doc-gen, use something like this to turn Pydantic into JSON:
 # github.com/Mermeid-Designs/pydantic-hooks
@@ -10,26 +7,31 @@ repos:
   # Standard fille formatting / hygiene
   - repo: https://github.com/pre-commit/pre-commit-hooks
     # See: https://github.com/pre-commit/pre-commit-hooks/releases
-    rev: v4.5.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-json
+        exclude: |
+          (?x)^(
+              ^.vscode/.*\.json
+          )$
       - id: pretty-format-json
+        exclude: |
+          (?x)^(
+              ^.vscode/.*\.json
+          )$
         args:
           - --autofix
+          # Note: this hook does not honor the .editorconfig value so
+          #   they need to be kept in sync manually
+          - --indent=2
       # Pypi API key, git ssh key and AWS should never be in this repo... but just in case
       - id: detect-aws-credentials
         args:
           - --allow-missing-credentials
       - id: detect-private-key
-
-  - repo: https://github.com/PyCQA/isort
-    # See: https://github.com/PyCQA/isort/releases
-    rev: 5.13.2
-    hooks:
-      - id: isort
 
   - repo: https://github.com/pre-commit/pygrep-hooks
     # See: https://github.com/pre-commit/pygrep-hooks/tags
@@ -37,21 +39,36 @@ repos:
     hooks:
       - id: python-check-blanket-noqa
 
-  - repo: https://github.com/psf/black
-    # See: https://github.com/psf/black/releases
-    rev: 23.12.1
+  # Make sure python is well formed
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.0
     hooks:
-      - id: black
-        language_version: python3.11
+      # Lint, fixing what can be automatically fixed
+      - id: ruff
+        args: [--fix]
+      # Format to ensure consistent style
+      - id: ruff-format
+
+  # TODO/aspirational: clean up GHA to follow best practices
+  # - repo: https://github.com/zizmorcore/zizmor-pre-commit
+  #   rev: v1.14.2
+  #   hooks:
+  #     - id: zizmor
+
+  - repo: https://github.com/renovatebot/pre-commit-hooks
+    rev: 43.4.2
+    hooks:
+      - id: renovate-config-validator
+        args: [--strict]
 
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.32.0
+    rev: v1.38.0
     hooks:
       - id: yamllint
         args: [-c=.yamllint.yaml]
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.37.0
+    rev: v0.47.0
     hooks:
       - id: markdownlint
 
