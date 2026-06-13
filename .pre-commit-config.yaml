@@ -74,7 +74,7 @@ repos:
 
   - repo: https://github.com/thlorenz/doctoc
     # See: https://github.com/thlorenz/doctoc/tags
-    rev: v2.2.0
+    rev: v2.5.0
     hooks:
       - id: doctoc
         files: README.md
